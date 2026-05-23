@@ -41,28 +41,62 @@ Ninguém quer ler 500 linhas de álgebra linear. Mas a pessoa **vai querer** uma
 
 ---
 
-## 3. A Floresta como Núcleo do Jogo
+## 3. Sistema de Pontuação por Interação
 
-### Como funciona
-- Cada aluno tem uma floresta pessoal e visível para os colegas.
-- Pontos ganhos com estudo são usados na **loja de árvores nativas**.
-- Árvores têm raridade e custo variados:
+Todo comportamento do aluno dentro da plataforma gera pontos. O objetivo é que nenhum minuto de presença seja desperdiçado.
 
-| Árvore | Bioma | Custo (pontos) | Raridade |
-|---|---|---|---|
-| Aroeira | Caatinga | 50 | Comum |
-| Mandacaru (cacto) | Caatinga | 80 | Comum |
-| Pequi | Cerrado | 150 | Incomum |
-| Ipê Amarelo | Cerrado/Mata Atlântica | 300 | Raro |
-| Castanheira-do-Pará | Amazônia | 500 | Épico |
-| Pau-Brasil | Mata Atlântica | 800 | Lendário |
+| Ação | Pontos |
+|---|---|
+| Ler um micro-bloco de conteúdo até o fim | +10 |
+| Responder corretamente a um checkpoint | +20 |
+| Tempo de permanência ativo (por minuto) | +2 |
+| Publicar uma resolução no feed | +15 |
+| Resolução aprovada pela IA | +50 |
+| Resolução marcada como útil por colegas | +10 por like |
+| Completar um módulo inteiro | +100 (bônus) |
+| Acessar a plataforma por dias consecutivos (streak) | multiplicador de pontos |
 
-- A floresta evolui por biomas: **Caatinga → Cerrado → Mata Atlântica → Amazônia**.
-- O aluno pode **visitar a floresta dos amigos** e ver como eles estão estudando — sem precisar perguntar.
+> Pontos não são apenas recompensa — são o **combustível da floresta**. Cada ponto acumulado é um passo em direção a uma nova árvore, um novo bioma, uma reserva mais rica.
+
+---
+
+## 4. A Reserva Florestal como Núcleo do Jogo
+
+### O que é a Reserva
+Cada aluno possui uma **Reserva Florestal Virtual** — um mapa pessoal onde suas árvores são plantadas. Não é apenas um jardim: é uma representação visual do quanto aquela pessoa estudou, contribuiu e cresceu.
+
+### Tiers de Acesso (Biomas Desbloqueáveis)
+As árvores não estão disponíveis para todos desde o início. O aluno precisa **desbloquear o bioma** antes de comprar as árvores daquele ecossistema.
+
+| Tier | Bioma | Pontos para Desbloquear |
+|---|---|---|
+| 1 | Caatinga | 0 (inicial) |
+| 2 | Cerrado | 500 pts |
+| 3 | Mata Atlântica | 1.500 pts |
+| 4 | Pantanal | 3.000 pts |
+| 5 | Amazônia | 6.000 pts |
+
+### Catálogo de Árvores por Tier
+
+| Árvore | Bioma (Tier) | Tier mín. | Custo | Raridade |
+|---|---|---|---|---|
+| Mandacaru | Caatinga (1) | 1 | 50 pts | Comum |
+| Aroeira | Caatinga (1) | 1 | 80 pts | Comum |
+| Pequi | Cerrado (2) | 2 | 150 pts | Incomum |
+| Buriti | Cerrado (2) | 2 | 200 pts | Incomum |
+| Ipê Amarelo | Mata Atlântica (3) | 3 | 350 pts | Raro |
+| Araucária | Mata Atlântica (3) | 3 | 400 pts | Raro |
+| Lobo-do-Pantanal (planta) | Pantanal (4) | 4 | 600 pts | Épico |
+| Castanheira-do-Pará | Amazônia (5) | 5 | 900 pts | Épico |
+| Pau-Brasil | Mata Atlântica (3) | 5 | 1.200 pts | Lendário |
+| Samaúma | Amazônia (5) | 5 | 1.500 pts | Lendário |
+
+> Uma árvore Lendária exige tanto pontos acumulados quanto o tier mínimo desbloqueado — incentivando profundidade e consistência no estudo.
 
 ### Ranking de Biodiversidade
-- O leaderboard mede a **riqueza da floresta** (diversidade de espécies + raridade), não só a pontuação bruta.
-- Isso incentiva estudar mais conteúdos diferentes, não só repetir o mesmo.
+- O leaderboard mede a **riqueza da floresta**: diversidade de espécies + raridade média das árvores plantadas.
+- Não é quem tem mais pontos — é quem tem a reserva mais rica e diversa.
+- Isso incentiva explorar diferentes matérias e conteúdos, não farmar sempre o mesmo bloco.
 
 ---
 
@@ -132,10 +166,20 @@ Ninguém quer ler 500 linhas de álgebra linear. Mas a pessoa **vai querer** uma
 - Acertos: ganham pontos e vão para a base pública de consulta.
 - Erros: recebem explicação privada e didática, sem exposição.
 
-### Visita à Floresta dos Colegas
-- Cada aluno tem um perfil com sua floresta visível.
-- Ver a floresta do colega mostra indiretamente o quanto ele estudou.
-- Cria pressão social positiva e senso de comunidade.
+### Feed Social com IA (detalhado)
+- Qualquer aluno pode publicar uma resolução, dúvida respondida ou explicação de conteúdo.
+- **Veteranos** (alunos com mais tier ou pontuação) têm suas resoluções destacadas.
+- A IA analisa cada post automaticamente antes de torná-lo público:
+  - Correto → vai para o feed público + gera pontos ao autor.
+  - Incorreto → autor recebe feedback privado, post não é publicado (sem exposição).
+- Posts aprovados entram na **base de conhecimento pública** da turma.
+- Outros alunos podem marcar posts como úteis, gerando pontos adicionais ao autor.
+
+### Campo Público — Reservas Abertas
+- Existe um mapa global onde qualquer aluno pode **visitar a reserva florestal de outro**.
+- Ver a floresta de um colega mostra, sem precisar perguntar: quantos biomas ele desbloqueou, quais árvores raras ele conquistou, há quanto tempo ele estuda.
+- Criar amizades, fazer follow, comparar reservas — tudo isso dentro da plataforma.
+- A pressão social é **positiva e não verbal**: a floresta fala por si.
 
 ---
 
