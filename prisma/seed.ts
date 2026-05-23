@@ -1,4 +1,4 @@
-import { PrismaClient, Rarity } from "@prisma/client";
+import { PrismaClient, Rarity, MissionType, AchievementType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -663,6 +663,58 @@ async function main() {
   );
 
   console.log("✅ Seed concluído! A reserva está pronta para florescer.");
+
+  // Missões Diárias
+  console.log("\n📋 Criando missões diárias...");
+  const MISSIONS = [
+    { id: 'mission-login', title: 'Login Diário', description: 'Faça login para continuar seu streak', type: 'login' as const, target: 1, pointsReward: 20, dayOfWeek: null },
+    { id: 'mission-content-1', title: 'Estude 1 Bloco', description: 'Complete pelo menos 1 bloco de conteúdo', type: 'content' as const, target: 1, pointsReward: 30, dayOfWeek: null },
+    { id: 'mission-content-3', title: 'Estude 3 Blocos', description: 'Complete 3 blocos de conteúdo', type: 'content' as const, target: 3, pointsReward: 75, dayOfWeek: null },
+    { id: 'mission-forest-1', title: 'Plante uma Árvore', description: 'Plante pelo menos 1 árvore', type: 'forest' as const, target: 1, pointsReward: 25, dayOfWeek: null },
+    { id: 'mission-forest-3', title: 'Hora do Plantio', description: 'Plante 3 árvores', type: 'forest' as const, target: 3, pointsReward: 60, dayOfWeek: null },
+    { id: 'mission-streak-3', title: 'Streak de 3 Dias', description: 'Mantenha 3 dias consecutivos', type: 'streak' as const, target: 3, pointsReward: 50, dayOfWeek: null },
+    { id: 'mission-social-1', title: 'Compartilhe', description: 'Faça uma postagem na comunidade', type: 'social' as const, target: 1, pointsReward: 40, dayOfWeek: null },
+  ];
+
+  for (const mission of MISSIONS) {
+    await prisma.dailyMission.upsert({
+      where: { id: mission.id },
+      update: mission,
+      create: mission,
+    });
+  }
+  console.log(`   ✓ ${MISSIONS.length} missões diárias criadas.\n`);
+
+  // Conquistas
+  console.log("🏆 Criando conquistas...");
+  const ACHIEVEMENTS = [
+    { code: 'first_login', title: 'Bem-vindo!', description: 'Complete seu primeiro login', icon: '👋', pointsBonus: 50, tier: 1, type: 'streak' as const },
+    { code: 'streak_3', title: 'No caminho certo', description: '3 dias seguidos de estudo', icon: '🔥', pointsBonus: 100, tier: 1, type: 'streak' as const },
+    { code: 'streak_7', title: 'Uma semana!', description: '7 dias seguidos de estudo', icon: '💪', pointsBonus: 250, tier: 2, type: 'streak' as const },
+    { code: 'streak_30', title: 'Mês champion', description: '30 dias seguidos de estudo', icon: '🏆', pointsBonus: 1000, tier: 3, type: 'streak' as const },
+    { code: 'points_100', title: 'Iniciante', description: 'Acumule 100 pontos', icon: '🌱', pointsBonus: 50, tier: 1, type: 'points' as const },
+    { code: 'points_1000', title: 'Explorador', description: 'Acumule 1.000 pontos', icon: '🌿', pointsBonus: 200, tier: 2, type: 'points' as const },
+    { code: 'points_10000', title: 'Mestre', description: 'Acumule 10.000 pontos', icon: '🌳', pointsBonus: 500, tier: 3, type: 'points' as const },
+    { code: 'forest_5', title: 'Reflorestador iniciante', description: 'Plante 5 árvores', icon: '🌲', pointsBonus: 100, tier: 1, type: 'forest' as const },
+    { code: 'forest_25', title: 'Reflorestador avançado', description: 'Plante 25 árvores', icon: '🌳', pointsBonus: 300, tier: 2, type: 'forest' as const },
+    { code: 'forest_100', title: 'Guardião da floresta', description: 'Plante 100 árvores', icon: '🌴', pointsBonus: 1000, tier: 3, type: 'forest' as const },
+    { code: 'content_5', title: 'Primeiros passos', description: 'Complete 5 blocos de conteúdo', icon: '📚', pointsBonus: 100, tier: 1, type: 'content' as const },
+    { code: 'content_25', title: 'Estudioso', description: 'Complete 25 blocos de conteúdo', icon: '📖', pointsBonus: 300, tier: 2, type: 'content' as const },
+    { code: 'content_100', title: 'Erudito', description: 'Complete 100 blocos de conteúdo', icon: '🎓', pointsBonus: 1000, tier: 3, type: 'content' as const },
+    { code: 'social_first', title: 'Sociável', description: 'Faça sua primeira postagem', icon: '💬', pointsBonus: 50, tier: 1, type: 'social' as const },
+    { code: 'social_10', title: 'Colaborador', description: 'Faça 10 postagens', icon: '🤝', pointsBonus: 200, tier: 2, type: 'social' as const },
+  ];
+
+  for (const ach of ACHIEVEMENTS) {
+    await prisma.achievement.upsert({
+      where: { code: ach.code },
+      update: ach,
+      create: ach,
+    });
+  }
+  console.log(`   ✓ ${ACHIEVEMENTS.length} conquistas criadas.\n`);
+
+  console.log("🎉 Fase 04 pronta! Missões e conquistas configuradas.");
 }
 
 main()

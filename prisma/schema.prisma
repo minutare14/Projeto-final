@@ -25,6 +25,8 @@ model User {
   posts         Post[]
   postLikes     PostLike[]
   pointEvents   PointEvent[]
+  missions      UserMission[]
+  achievements  UserAchievement[]
 
   @@map("users")
 }
@@ -209,4 +211,78 @@ model PointEvent {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("point_events")
+}
+
+model DailyMission {
+  id          String   @id @default(uuid())
+  title       String   @db.VarChar(120)
+  description String?  @db.VarChar(255)
+  type        MissionType
+  target      Int      @default(1)
+  pointsReward Int     @default(50) @map("points_reward")
+  dayOfWeek   Int?     @map("day_of_week")
+  active      Boolean  @default(true)
+
+  userMissions UserMission[]
+
+  @@map("daily_missions")
+}
+
+model UserMission {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  missionId   String   @map("mission_id")
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  claimedAt   DateTime? @map("claimed_at")
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission DailyMission @relation(fields: [missionId], references: [id])
+
+  @@unique([userId, missionId])
+  @@map("user_missions")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(40)
+  title       String   @db.VarChar(80)
+  description String?  @db.VarChar(255)
+  icon        String?  @db.VarChar(40)
+  pointsBonus Int      @default(100) @map("points_bonus")
+  tier        Int      @default(1)
+  type        AchievementType
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  earnedAt      DateTime @default(now()) @map("earned_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+enum MissionType {
+  login
+  content
+  forest
+  social
+  streak
+}
+
+enum AchievementType {
+  points
+  streak
+  forest
+  content
+  social
 }
