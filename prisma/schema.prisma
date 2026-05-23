@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String?  @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  totalPoints  Int      @default(0) @map("total_points")
+  currentTier  Int      @default(1) @map("current_tier")
+  streakDays   Int      @default(0) @map("streak_days")
+  lastActive   DateTime? @map("last_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  forest        UserForest[]
+  unlockedBiomes UserBiome[]
+  progress      UserProgress[]
+  posts         Post[]
+  postLikes     PostLike[]
+  pointEvents   PointEvent[]
+
+  @@map("users")
+}
+
+model Biome {
+  id              Int    @id @default(autoincrement())
+  name            String @db.VarChar(60)
+  tier            Int    @unique
+  pointsRequired  Int    @map("points_required")
+  description     String?
+  backgroundUrl   String? @map("background_url")
+
+  trees         Tree[]
+  userForest    UserForest[]
+  userBiomes    UserBiome[]
+
+  @@map("biomes")
+}
+
+model Tree {
+  id             Int    @id @default(autoincrement())
+  commonName     String @db.VarChar(100) @map("common_name")
+  scientificName String? @db.VarChar(120) @map("scientific_name")
+  biomeId        Int    @map("biome_id")
+  tierRequired   Int    @map("tier_required")
+  costPoints     Int    @map("cost_points")
+  rarity         Rarity
+  description    String?
+  illustrationUrl String? @map("illustration_url")
+  funFact        String? @map("fun_fact")
+
+  biome      Biome        @relation(fields: [biomeId], references: [id])
+  userForest UserForest[]
+
+  @@map("trees")
+}
+
+enum Rarity {
+  comum
+  incomum
+  raro
+  epico
+  lendario
+}
+
+model UserForest {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  treeId    Int      @map("tree_id")
+  biomeId   Int      @map("biome_id")
+  posX      Float    @map("pos_x")
+  posY      Float    @map("pos_y")
+  plantedAt DateTime @default(now()) @map("planted_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tree  Tree  @relation(fields: [treeId], references: [id])
+  biome Biome @relation(fields: [biomeId], references: [id])
+
+  @@map("user_forest")
+}
+
+model UserBiome {
+  userId     String   @map("user_id")
+  biomeId    Int      @map("biome_id")
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  biome Biome @relation(fields: [biomeId], references: [id])
+
+  @@id([userId, biomeId])
+  @@map("user_biomes")
+}
+
+model Subject {
+  id          Int    @id @default(autoincrement())
+  code        String @unique @db.VarChar(20)
+  name        String @db.VarChar(120)
+  description String?
+
+  blocks ContentBlock[]
+  posts  Post[]
+
+  @@map("subjects")
+}
+
+model ContentBlock {
+  id           String  @id @default(uuid())
+  subjectId    Int     @map("subject_id")
+  orderIndex   Int     @map("order_index")
+  title        String? @db.VarChar(200)
+  body         String
+  hasFormula   Boolean @default(false) @map("has_formula")
+  formulaLatex String? @map("formula_latex")
+  illustration String?
+  pointsReward Int     @default(10) @map("points_reward")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  subject     Subject       @relation(fields: [subjectId], references: [id])
+  checkpoints Checkpoint[]
+  progress    UserProgress[]
+
+  @@map("content_blocks")
+}
+
+model Checkpoint {
+  id            String @id @default(uuid())
+  blockId       String @map("block_id")
+  question      String
+  optionA       String @map("option_a")
+  optionB       String @map("option_b")
+  optionC       String? @map("option_c")
+  optionD       String? @map("option_d")
+  correctOption String @map("correct_option") @db.Char(1)
+  explanation   String?
+  pointsReward  Int    @default(20) @map("points_reward")
+
+  block ContentBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("checkpoints")
+}
+
+model UserProgress {
+  userId       String   @map("user_id")
+  blockId      String   @map("block_id")
+  completed    Boolean  @default(false)
+  completedAt  DateTime? @map("completed_at")
+  pointsEarned Int      @default(0) @map("points_earned")
+
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  block ContentBlock @relation(fields: [blockId], references: [id])
+
+  @@id([userId, blockId])
+  @@map("user_progress")
+}
+
+model Post {
+  id           String     @id @default(uuid())
+  authorId     String     @map("author_id")
+  subjectId    Int        @map("subject_id")
+  body         String
+  status       PostStatus @default(pending)
+  aiFeedback   String?    @map("ai_feedback")
+  aiBonusScore Int        @default(0) @map("ai_bonus_score")
+  isPublic     Boolean    @default(false) @map("is_public")
+  likesCount   Int        @default(0) @map("likes_count")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  author  User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id])
+  likes   PostLike[]
+
+  @@map("posts")
+}
+
+enum PostStatus {
+  pending
+  approved
+  rejected
+}
+
+model PostLike {
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@map("post_likes")
+}
+
+model PointEvent {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  source    String   @db.VarChar(40)
+  points    Int
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("point_events")
+}
