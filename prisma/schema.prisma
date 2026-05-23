@@ -55,6 +55,7 @@ model Tree {
   description    String?
   illustrationUrl String? @map("illustration_url")
   funFact        String? @map("fun_fact")
+  co2AbsorptionKgYear Float @default(22.0) @map("co2_absorption_kg_year")
 
   biome      Biome        @relation(fields: [biomeId], references: [id])
   userForest UserForest[]
