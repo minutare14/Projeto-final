@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserva Florestal — Sprites Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    .controls {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 1rem 1.5rem;
+      background: #16213e;
+      border-radius: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border: 1px solid #0f3460;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .control-group label {
+      font-size: 0.9rem;
+      color: #a0a0a0;
+    }
+
+    .toggle-btn {
+      background: #0f3460;
+      color: #e0e0e0;
+      border: 1px solid #e94560;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .toggle-btn:hover { background: #e94560; }
+    .toggle-btn.active { background: #e94560; color: #fff; }
+
+    .scale-slider {
+      width: 150px;
+      accent-color: #e94560;
+    }
+
+    .scale-value {
+      min-width: 3rem;
+      text-align: center;
+      font-weight: 600;
+      color: #e94560;
+    }
+
+    .biome-section {
+      margin-bottom: 3rem;
+    }
+
+    .biome-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #e94560;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #0f3460;
+      letter-spacing: 0.05em;
+    }
+
+    .sprites-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: flex-start;
+    }
+
+    .sprite-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 140px;
+      border: 1px solid #0f3460;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .sprite-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(233, 69, 96, 0.15);
+    }
+
+    .sprite-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .sprite-info {
+      text-align: center;
+    }
+
+    .sprite-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .sprite-meta {
+      font-size: 0.75rem;
+      color: #808080;
+    }
+
+    .rarity-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .rarity-comum { background: #4a4a4a; color: #ccc; }
+    .rarity-incomum { background: #1a4a5a; color: #5bc0de; }
+    .rarity-raro { background: #2a2a6a; color: #8ab4f8; }
+    .rarity-epico { background: #5a3a1a; color: #f0a050; }
+    .rarity-lendario { background: #4a1a4a; color: #d060ff; }
+
+    .stats {
+      margin-top: 3rem;
+      padding: 1rem 1.5rem;
+      background: #16213e;
+      border-radius: 12px;
+      border: 1px solid #0f3460;
+      display: flex;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .stat { text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #e94560; }
+    .stat-label { font-size: 0.8rem; color: #808080; }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Animação:</label>
+    <button class="toggle-btn active" id="animToggle" onclick="toggleAnimation()">Ligada</button>
+  </div>
+  <div class="control-group">
+    <label>Escala:</label>
+    <input type="range" class="scale-slider" id="scaleSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateScale()">
+    <span class="scale-value" id="scaleValue">1x</span>
+  </div>
+</div>
+
+<!-- ============ CAATINGA ============ -->
+<div class="biome-section">
+  <h2 class="biome-title">CAATINGA</h2>
+  <div class="sprites-grid">
+
+    <!-- Mandacaru - comum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100" class="tree-svg">
+          <defs>
+            <linearGradient id="mand-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#E8D98A"/><stop offset="100%" stop-color="#C8B560"/></linearGradient>
+            <linearGradient id="mand-front" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7A9A3A"/><stop offset="100%" stop-color="#4A6B25"/></linearGradient>
+            <linearGradient id="mand-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A7A2A"/><stop offset="100%" stop-color="#3A5A18"/></linearGradient>
+            <linearGradient id="mand-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#A07828"/><stop offset="100%" stop-color="#6B4F14"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="22" ry="6" fill="rgba(0,0,0,0.15)"/>
+          <rect x="36" y="70" width="8" height="22" fill="url(#mand-trunk)"/>
+          <rect x="36" y="70" width="3" height="22" fill="#5C4A0F" opacity="0.5"/>
+          <polygon points="40,15 55,27 40,35 25,27" fill="url(#mand-top)"/>
+          <polygon points="25,27 40,35 40,85 25,72" fill="url(#mand-front)"/>
+          <polygon points="55,27 40,35 40,85 55,72" fill="url(#mand-side)"/>
+          <line x1="28" y1="45" x2="38" y2="50" stroke="#E8D98A" stroke-width="1" opacity="0.6"/>
+          <line x1="30" y1="55" x2="40" y2="60" stroke="#E8D98A" stroke-width="1" opacity="0.6"/>
+          <line x1="32" y1="65" x2="40" y2="68" stroke="#E8D98A" stroke-width="1" opacity="0.6"/>
+          <g class="animated">
+            <polygon points="20,50 25,55 25,72 20,68" fill="url(#mand-front)"/>
+            <polygon points="60,50 55,55 55,72 60,68" fill="url(#mand-side)"/>
+            <polygon points="20,50 25,55 20,60 15,55" fill="url(#mand-top)"/>
+            <polygon points="60,50 55,55 60,60 65,55" fill="url(#mand-top)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Mandacaru</div>
+        <div class="sprite-meta">Cereus jamacaru</div>
+        <span class="rarity-badge rarity-comum">comum</span>
+      </div>
+    </div>
+
+    <!-- Juazeiro - incomum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100">
+          <defs>
+            <linearGradient id="jua-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#D4C050"/><stop offset="100%" stop-color="#B8A040"/></linearGradient>
+            <linearGradient id="jua-front" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6A8A2A"/><stop offset="100%" stop-color="#4A6A18"/></linearGradient>
+            <linearGradient id="jua-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A7A1A"/><stop offset="100%" stop-color="#3A5A08"/></linearGradient>
+            <linearGradient id="jua-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7A6030"/><stop offset="100%" stop-color="#5A4020"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="18" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <rect x="36" y="55" width="8" height="37" fill="url(#jua-trunk)"/>
+          <rect x="36" y="55" width="3" height="37" fill="#5A4020" opacity="0.4"/>
+          <polygon points="40,20 58,35 40,48 22,35" fill="url(#jua-top)"/>
+          <polygon points="22,35 40,48 40,78 22,62" fill="url(#jua-front)"/>
+          <polygon points="58,35 40,48 40,78 58,62" fill="url(#jua-side)"/>
+          <circle cx="25" cy="40" r="3" fill="#8B7355" opacity="0.7"/>
+          <circle cx="50" cy="35" r="2.5" fill="#8B7355" opacity="0.6"/>
+          <g class="animated">
+            <polygon points="15,42 28,52 22,65 12,55" fill="url(#jua-side)"/>
+            <polygon points="65,42 52,52 58,65 68,55" fill="url(#jua-side)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Juazeiro</div>
+        <div class="sprite-meta">Ziziphus joazeiro</div>
+        <span class="rarity-badge rarity-incomum">incomum</span>
+      </div>
+    </div>
+
+    <!-- Aroeira - raro -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100">
+          <defs>
+            <linearGradient id="aro-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#C8B050"/><stop offset="100%" stop-color="#A89030"/></linearGradient>
+            <linearGradient id="aro-front" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8A9A4A"/><stop offset="100%" stop-color="#5A7A28"/></linearGradient>
+            <linearGradient id="aro-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6A7A3A"/><stop offset="100%" stop-color="#4A5A18"/></linearGradient>
+            <linearGradient id="aro-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6A5030"/><stop offset="100%" stop-color="#4A3520"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="20" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <rect x="34" y="50" width="12" height="42" fill="url(#aro-trunk)"/>
+          <rect x="34" y="50" width="4" height="42" fill="#4A3520" opacity="0.4"/>
+          <polygon points="40,12 62,28 40,42 18,28" fill="url(#aro-top)"/>
+          <polygon points="18,28 40,42 40,80 18,62" fill="url(#aro-front)"/>
+          <polygon points="62,28 40,42 40,80 62,62" fill="url(#aro-side)"/>
+          <polygon points="12,35 25,45 20,58 8,48" fill="url(#aro-side)"/>
+          <polygon points="68,35 55,45 60,58 72,48" fill="url(#aro-side)"/>
+          <g class="animated">
+            <polygon points="5,42 22,52 15,68 2,55" fill="#6A7A3A"/>
+            <polygon points="75,42 58,52 65,68 78,55" fill="#4A5A18"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Aroeira-do-Sertão</div>
+        <div class="sprite-meta">Myracrodruon urundeuva</div>
+        <span class="rarity-badge rarity-raro">raro</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ CERRADO ============ -->
+<div class="biome-section">
+  <h2 class="biome-title">CERRADO</h2>
+  <div class="sprites-grid">
+
+    <!-- Buriti - comum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 112px;">
+        <svg width="80" height="112" viewBox="0 0 80 110">
+          <defs>
+            <linearGradient id="buriti-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#8B7355"/><stop offset="100%" stop-color="#5C4A3A"/></linearGradient>
+            <linearGradient id="buriti-frond" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4A7C2F"/><stop offset="100%" stop-color="#2D5A1E"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="105" rx="15" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <rect x="37" y="50" width="6" height="55" fill="url(#buriti-trunk)"/>
+          <polygon points="40,15 50,22 40,28 30,22" fill="#5A8A3A"/>
+          <polygon points="40,20 70,35 40,45 10,35" fill="url(#buriti-frond)"/>
+          <polygon points="40,22 65,30 40,40 15,30" fill="#3A6B25"/>
+          <circle cx="45" cy="38" r="3" fill="#8B4513"/>
+          <circle cx="50" cy="42" r="2.5" fill="#A0522D"/>
+          <circle cx="38" cy="40" r="2" fill="#8B4513"/>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Buriti</div>
+        <div class="sprite-meta">Mauritia flexuosa</div>
+        <span class="rarity-badge rarity-comum">comum</span>
+      </div>
+    </div>
+
+    <!-- Ipê Amarelo - raro -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100" style="filter: drop-shadow(0 0 4px rgba(255,180,50,0.4))">
+          <defs>
+            <linearGradient id="ipe-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#F5D23B"/><stop offset="100%" stop-color="#E8B82A"/></linearGradient>
+            <linearGradient id="ipe-front" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4A7C2F"/><stop offset="100%" stop-color="#2D5A1E"/></linearGradient>
+            <linearGradient id="ipe-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3A6B25"/><stop offset="100%" stop-color="#1A4A10"/></linearGradient>
+            <linearGradient id="ipe-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6B4423"/><stop offset="100%" stop-color="#4A2F18"/></linearGradient>
+            <radialGradient id="ipe-flower" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFD700"/><stop offset="100%" stop-color="#F5A623"/></radialGradient>
+          </defs>
+          <ellipse cx="40" cy="94" rx="28" ry="6" fill="rgba(0,0,0,0.18)"/>
+          <polygon points="40,35 65,50 40,60 15,50" fill="url(#ipe-side)"/>
+          <polygon points="40,28 60,42 40,52 20,42" fill="url(#ipe-front)"/>
+          <polygon points="40,20 55,32 40,40 25,32" fill="url(#ipe-top)"/>
+          <circle cx="30" cy="35" r="4" fill="url(#ipe-flower)"/>
+          <circle cx="50" cy="33" r="5" fill="url(#ipe-flower)"/>
+          <circle cx="40" cy="28" r="4" fill="url(#ipe-flower)"/>
+          <circle cx="25" cy="42" r="3" fill="url(#ipe-flower)"/>
+          <circle cx="55" cy="40" r="4" fill="url(#ipe-flower)"/>
+          <circle cx="35" cy="45" r="3" fill="url(#ipe-flower)"/>
+          <rect x="35" y="58" width="10" height="36" fill="url(#ipe-trunk)"/>
+          <rect x="35" y="58" width="4" height="36" fill="#4A2F18" opacity="0.4"/>
+          <g class="animated">
+            <polygon points="15,48 25,55 20,65 10,58" fill="url(#ipe-side)"/>
+            <polygon points="65,48 55,55 60,65 70,58" fill="url(#ipe-side)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Ipê Amarelo</div>
+        <div class="sprite-meta">Handroanthus albus</div>
+        <span class="rarity-badge rarity-raro">raro</span>
+      </div>
+    </div>
+
+    <!-- Pequizeiro - incomum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100">
+          <defs>
+            <linearGradient id="peq-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A8A3A"/><stop offset="100%" stop-color="#4A7A2A"/></linearGradient>
+            <linearGradient id="peq-front" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#4A7C2F"/><stop offset="100%" stop-color="#2D5A1E"/></linearGradient>
+            <linearGradient id="peq-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3A6B25"/><stop offset="100%" stop-color="#1A4A10"/></linearGradient>
+            <linearGradient id="peq-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A4020"/><stop offset="100%" stop-color="#3A2A15"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="24" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <polygon points="40,18 62,32 40,48 18,32" fill="url(#peq-top)"/>
+          <polygon points="18,32 40,48 40,82 18,65" fill="url(#peq-front)"/>
+          <polygon points="62,32 40,48 40,82 62,65" fill="url(#peq-side)"/>
+          <rect x="34" y="48" width="12" height="44" fill="url(#peq-trunk)"/>
+          <rect x="34" y="48" width="4" height="44" fill="#3A2A15" opacity="0.4"/>
+          <g class="animated">
+            <polygon points="8,40 25,50 18,65 5,52" fill="url(#peq-side)"/>
+            <polygon points="72,40 55,50 62,65 75,52" fill="url(#peq-side)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Pequizeiro</div>
+        <div class="sprite-meta">Caryocar brasiliense</div>
+        <span class="rarity-badge rarity-incomum">incomum</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ MATA ATLÂNTICA ============ -->
+<div class="biome-section">
+  <h2 class="biome-title">MATA ATLÂNTICA</h2>
+  <div class="sprites-grid">
+
+    <!-- Jequitibá - épico -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100" style="filter: drop-shadow(0 0 4px rgba(255,180,50,0.4))">
+          <defs>
+            <linearGradient id="jeq-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/></linearGradient>
+            <linearGradient id="jeq-crown" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2E9E5A"/><stop offset="100%" stop-color="#1A6B35"/></linearGradient>
+            <radialGradient id="jeq-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3AAA6A" stop-opacity="0.5"/><stop offset="100%" stop-color="#1A6B35" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="40" cy="35" rx="30" ry="25" fill="url(#jeq-glow)"/>
+          <ellipse cx="40" cy="94" rx="26" ry="6" fill="rgba(0,0,0,0.18)"/>
+          <polygon points="40,8 68,24 40,42 12,24" fill="url(#jeq-crown)"/>
+          <polygon points="40,15 62,30 40,44 18,30" fill="#2A8A4A"/>
+          <polygon points="40,22 55,34 40,44 25,34" fill="#1A7A3A"/>
+          <rect x="30" y="42" width="20" height="52" fill="url(#jeq-trunk)"/>
+          <rect x="30" y="42" width="6" height="52" fill="#3E2723" opacity="0.4"/>
+          <line x1="32" y1="55" x2="32" y2="85" stroke="#2A1F1A" stroke-width="1.5" opacity="0.3"/>
+          <line x1="40" y1="50" x2="40" y2="88" stroke="#2A1F1A" stroke-width="1.5" opacity="0.2"/>
+          <line x1="48" y1="52" x2="48" y2="86" stroke="#2A1F1A" stroke-width="1.5" opacity="0.3"/>
+          <g class="animated">
+            <polygon points="12,28 28,38 22,52 8,42" fill="#2A8A4A"/>
+            <polygon points="68,28 52,38 58,52 72,42" fill="#1A6B35"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Jequitibá-Rosa</div>
+        <div class="sprite-meta">Cariniana legalis</div>
+        <span class="rarity-badge rarity-epico">épico</span>
+      </div>
+    </div>
+
+    <!-- Palmito Juçara - incomum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 120px;">
+        <svg width="80" height="120" viewBox="0 0 80 115">
+          <defs>
+            <linearGradient id="pal-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#6B5A4A"/><stop offset="100%" stop-color="#4A3A2A"/></linearGradient>
+            <linearGradient id="pal-frond" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2E9E5A"/><stop offset="100%" stop-color="#1A6B35"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="110" rx="12" ry="4" fill="rgba(0,0,0,0.15)"/>
+          <rect x="37" y="45" width="6" height="65" fill="url(#pal-trunk)"/>
+          <polygon points="40,10 48,18 40,24 32,18" fill="#3A8A4A"/>
+          <polygon points="40,15 72,32 40,45 8,32" fill="url(#pal-frond)"/>
+          <polygon points="40,18 65,28 40,40 15,28" fill="#2A7A4A"/>
+          <polygon points="40,20 58,26 40,38 22,26" fill="#1A6A3A"/>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Palmito Juçara</div>
+        <div class="sprite-meta">Euterpe edulis</div>
+        <span class="rarity-badge rarity-epico">épico</span>
+      </div>
+    </div>
+
+    <!-- Pau-Brasil - lendário -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 104px;">
+        <svg width="80" height="104" viewBox="0 0 80 105" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.6))">
+          <defs>
+            <linearGradient id="pau-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#8B4513"/><stop offset="100%" stop-color="#5D2E0C"/></linearGradient>
+            <linearGradient id="pau-crown" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2E9E5A"/><stop offset="100%" stop-color="#1A6B35"/></linearGradient>
+            <radialGradient id="pau-glow" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#FFD700" stop-opacity="0.4"/><stop offset="100%" stop-color="#1A6B35" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="40" cy="38" rx="35" ry="35" fill="url(#pau-glow)"/>
+          <ellipse cx="40" cy="98" rx="28" ry="6" fill="rgba(0,0,0,0.2)"/>
+          <polygon points="40,8 70,28 40,48 10,28" fill="url(#pau-crown)"/>
+          <polygon points="40,15 62,32 40,48 18,32" fill="#2A8A4A"/>
+          <polygon points="40,23 55,36 40,46 25,36" fill="#1A7A3A"/>
+          <polygon points="40,30 48,38 40,45 32,38" fill="#0D6A2A"/>
+          <rect x="32" y="48" width="16" height="50" fill="url(#pau-trunk)"/>
+          <rect x="32" y="48" width="5" height="50" fill="#5D2E0C" opacity="0.4"/>
+          <rect x="34" y="55" width="12" height="2" fill="#A0522D" opacity="0.3"/>
+          <rect x="34" y="65" width="12" height="2" fill="#A0522D" opacity="0.25"/>
+          <rect x="34" y="75" width="12" height="2" fill="#A0522D" opacity="0.2"/>
+          <rect x="34" y="85" width="12" height="2" fill="#A0522D" opacity="0.15"/>
+          <g class="animated">
+            <polygon points="10,32 25,42 18,55 5,45" fill="#2A8A4A"/>
+            <polygon points="70,32 55,42 62,55 75,45" fill="#1A6B35"/>
+          </g>
+          <circle cx="30" cy="25" r="2" fill="#FFD700" opacity="0.5"/>
+          <circle cx="52" cy="20" r="1.5" fill="#FFF" opacity="0.4"/>
+          <circle cx="45" cy="35" r="1" fill="#FFD700" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Pau-Brasil</div>
+        <div class="sprite-meta">Paubrasilia echinata</div>
+        <span class="rarity-badge rarity-lendario">lendário</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ PANTANAL ============ -->
+<div class="biome-section">
+  <h2 class="biome-title">PANTANAL</h2>
+  <div class="sprites-grid">
+
+    <!-- Carandá - incomum -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 112px;">
+        <svg width="80" height="112" viewBox="0 0 80 110">
+          <defs>
+            <linearGradient id="car-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7A6A4A"/><stop offset="100%" stop-color="#5A4A3A"/></linearGradient>
+            <linearGradient id="car-frond" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3AB8A0"/><stop offset="100%" stop-color="#1E7A6A"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="105" rx="14" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <rect x="36" y="48" width="8" height="57" fill="url(#car-trunk)"/>
+          <polygon points="40,12 48,20 40,26 32,20" fill="#4AC8B0"/>
+          <polygon points="40,18 68,32 40,44 12,32" fill="url(#car-frond)"/>
+          <polygon points="40,20 62,28 40,40 18,28" fill="#2AA090"/>
+          <polygon points="40,22 56,28 40,38 24,28" fill="#1A8070"/>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Carandá</div>
+        <div class="sprite-meta">Copernicia alba</div>
+        <span class="rarity-badge rarity-incomum">incomum</span>
+      </div>
+    </div>
+
+    <!-- Cambará - raro -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100">
+          <defs>
+            <linearGradient id="cam-top" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#4AC8A0"/><stop offset="100%" stop-color="#3AA080"/></linearGradient>
+            <linearGradient id="cam-front" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3AB8A0"/><stop offset="100%" stop-color="#1E7A6A"/></linearGradient>
+            <linearGradient id="cam-side" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2AA080"/><stop offset="100%" stop-color="#1A6050"/></linearGradient>
+            <linearGradient id="cam-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A6A4A"/><stop offset="100%" stop-color="#3A4A3A"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="22" ry="5" fill="rgba(0,0,0,0.15)"/>
+          <polygon points="40,15 60,28 40,42 20,28" fill="url(#cam-top)"/>
+          <polygon points="20,28 40,42 40,80 20,62" fill="url(#cam-front)"/>
+          <polygon points="60,28 40,42 40,80 60,62" fill="url(#cam-side)"/>
+          <rect x="34" y="42" width="12" height="50" fill="url(#cam-trunk)"/>
+          <rect x="34" y="42" width="4" height="50" fill="#3A4A3A" opacity="0.4"/>
+          <g class="animated">
+            <polygon points="8,38 22,48 18,62 5,50" fill="url(#cam-side)"/>
+            <polygon points="72,38 58,48 62,62 75,50" fill="url(#cam-side)"/>
+            <polygon points="15,45 28,55 25,68 12,56" fill="url(#cam-side)" opacity="0.8"/>
+            <polygon points="65,45 52,55 55,68 68,56" fill="url(#cam-side)" opacity="0.8"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Cambará</div>
+        <div class="sprite-meta">Vochysia divergens</div>
+        <span class="rarity-badge rarity-raro">raro</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ AMAZÔNIA ============ -->
+<div class="biome-section">
+  <h2 class="biome-title">AMAZÔNIA</h2>
+  <div class="sprites-grid">
+
+    <!-- Castanheira - épico -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 104px;">
+        <svg width="80" height="104" viewBox="0 0 80 105" style="filter: drop-shadow(0 0 4px rgba(255,180,50,0.4))">
+          <defs>
+            <linearGradient id="casta-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5D4037"/><stop offset="100%" stop-color="#3E2723"/></linearGradient>
+            <linearGradient id="casta-crown" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1D5C2A"/><stop offset="100%" stop-color="#0D3A18"/></linearGradient>
+            <radialGradient id="casta-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A7A3A" stop-opacity="0.6"/><stop offset="100%" stop-color="#0D3A18" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="40" cy="35" rx="35" ry="30" fill="url(#casta-glow)"/>
+          <ellipse cx="40" cy="98" rx="30" ry="7" fill="rgba(0,0,0,0.2)"/>
+          <polygon points="40,10 72,28 40,45 8,28" fill="url(#casta-crown)"/>
+          <polygon points="40,18 65,32 40,48 15,32" fill="#1A5A22"/>
+          <polygon points="40,25 58,36 40,48 22,36" fill="#0D4A18"/>
+          <rect x="32" y="45" width="16" height="53" fill="url(#casta-trunk)"/>
+          <rect x="32" y="45" width="5" height="53" fill="#3E2723" opacity="0.4"/>
+          <line x1="34" y1="60" x2="34" y2="85" stroke="#2A1F1A" stroke-width="1" opacity="0.3"/>
+          <line x1="40" y1="55" x2="40" y2="90" stroke="#2A1F1A" stroke-width="1" opacity="0.2"/>
+          <line x1="46" y1="58" x2="46" y2="88" stroke="#2A1F1A" stroke-width="1" opacity="0.3"/>
+          <g class="animated">
+            <polygon points="8,32 20,42 15,55 5,45" fill="#1A5A22"/>
+            <polygon points="72,32 60,42 65,55 75,45" fill="#0D3A18"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Castanheira-do-Pará</div>
+        <div class="sprite-meta">Bertholletia excelsa</div>
+        <span class="rarity-badge rarity-epico">épico</span>
+      </div>
+    </div>
+
+    <!-- Samaúma - lendário -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 112px;">
+        <svg width="80" height="112" viewBox="0 0 80 115" style="filter: drop-shadow(0 0 8px rgba(255,215,0,0.6))">
+          <defs>
+            <linearGradient id="sama-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5D4A3A"/><stop offset="100%" stop-color="#3E2E22"/></linearGradient>
+            <linearGradient id="sama-crown" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1D5C2A"/><stop offset="100%" stop-color="#0A3A15"/></linearGradient>
+            <radialGradient id="sama-legend-glow" cx="50%" cy="60%" r="60%"><stop offset="0%" stop-color="#FFD700" stop-opacity="0.3"/><stop offset="50%" stop-color="#FFA500" stop-opacity="0.15"/><stop offset="100%" stop-color="#0A3A15" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="40" cy="45" rx="38" ry="45" fill="url(#sama-legend-glow)"/>
+          <ellipse cx="40" cy="108" rx="32" ry="7" fill="rgba(0,0,0,0.25)"/>
+          <polygon points="20,85 35,75 35,95 20,100" fill="#4A3A2A"/>
+          <polygon points="60,85 45,75 45,95 60,100" fill="#3A2A1A"/>
+          <polygon points="15,90 32,78 30,100 15,105" fill="#5A4A3A" opacity="0.8"/>
+          <polygon points="65,90 48,78 50,100 65,105" fill="#4A3A2A" opacity="0.8"/>
+          <polygon points="40,5 78,30 40,50 2,30" fill="url(#sama-crown)"/>
+          <polygon points="40,12 70,32 40,50 10,32" fill="#1A5A25"/>
+          <polygon points="40,20 62,35 40,48 18,35" fill="#0D4A18"/>
+          <polygon points="40,28 55,38 40,48 25,38" fill="#0A3A12"/>
+          <rect x="33" y="48" width="14" height="60" fill="url(#sama-trunk)"/>
+          <rect x="33" y="48" width="4" height="60" fill="#3E2E22" opacity="0.4"/>
+          <g class="animated">
+            <polygon points="2,30 18,40 12,55 0,45" fill="#1A5A22"/>
+            <polygon points="78,30 62,40 68,55 80,45" fill="#0D3A18"/>
+          </g>
+          <circle cx="25" cy="20" r="1.5" fill="#FFD700" opacity="0.6"/>
+          <circle cx="55" cy="15" r="1" fill="#FFF" opacity="0.5"/>
+          <circle cx="60" cy="30" r="1.2" fill="#FFD700" opacity="0.4"/>
+          <circle cx="20" cy="35" r="1" fill="#FFF" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Samaúma</div>
+        <div class="sprite-meta">Ceiba pentandra</div>
+        <span class="rarity-badge rarity-lendario">lendário</span>
+      </div>
+    </div>
+
+    <!-- Seringueira - épico -->
+    <div class="sprite-card">
+      <div class="sprite-container" style="width: 80px; height: 96px;">
+        <svg width="80" height="96" viewBox="0 0 80 100" style="filter: drop-shadow(0 0 4px rgba(255,180,50,0.4))">
+          <defs>
+            <linearGradient id="ser-trunk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#5A4A3A"/><stop offset="100%" stop-color="#3E2E2A"/></linearGradient>
+            <linearGradient id="ser-crown" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1D5C2A"/><stop offset="100%" stop-color="#0D3A18"/></linearGradient>
+          </defs>
+          <ellipse cx="40" cy="92" rx="26" ry="6" fill="rgba(0,0,0,0.18)"/>
+          <polygon points="40,8 70,26 40,45 10,26" fill="url(#ser-crown)"/>
+          <polygon points="40,15 62,30 40,46 18,30" fill="#1A5A22"/>
+          <polygon points="40,22 55,35 40,45 25,35" fill="#0D4A18"/>
+          <rect x="32" y="45" width="16" height="47" fill="url(#ser-trunk)"/>
+          <rect x="32" y="45" width="5" height="47" fill="#3E2E2A" opacity="0.4"/>
+          <g class="animated">
+            <polygon points="10,30 25,40 20,52 6,42" fill="#1A5A22"/>
+            <polygon points="70,30 55,40 60,52 74,42" fill="#0D3A18"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sprite-info">
+        <div class="sprite-name">Seringueira</div>
+        <div class="sprite-meta">Hevea brasiliensis</div>
+        <span class="rarity-badge rarity-epico">épico</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Stats footer -->
+<div class="stats">
+  <div class="stat"><div class="stat-value">14</div><div class="stat-label">sprites</div></div>
+  <div class="stat"><div class="stat-value">5</div><div class="stat-label">biomas</div></div>
+  <div class="stat"><div class="stat-value">5</div><div class="stat-label">raridades</div></div>
+</div>
+
+<style>
+@keyframes sway {
+  0%, 100% { transform: rotate(-1deg); transform-origin: center bottom; }
+  50% { transform: rotate(1deg); transform-origin: center bottom; }
+}
+
+.animated {
+  animation: sway 4s ease-in-out infinite;
+}
+
+#animToggle.active ~ * .animated,
+body:has(#animToggle.active) .animated {
+  animation-play-state: running;
+}
+
+.toggle-btn:not(.active) + .sprites-grid .animated,
+.toggle-btn:not(.active) ~ .biome-section .animated {
+  animation: none;
+}
+</style>
+
+<script>
+let animationEnabled = true;
+
+function toggleAnimation() {
+  animationEnabled = !animationEnabled;
+  const btn = document.getElementById('animToggle');
+  const animated = document.querySelectorAll('.animated');
+
+  if (animationEnabled) {
+    btn.textContent = 'Ligada';
+    btn.classList.add('active');
+    animated.forEach(el => el.style.animationPlayState = 'running');
+  } else {
+    btn.textContent = 'Desligada';
+    btn.classList.remove('active');
+    animated.forEach(el => el.style.animationPlayState = 'paused');
+  }
+}
+
+function updateScale() {
+  const slider = document.getElementById('scaleSlider');
+  const value = document.getElementById('scaleValue');
+  const scale = parseFloat(slider.value);
+
+  value.textContent = scale + 'x';
+
+  document.querySelectorAll('.sprite-container').forEach(container => {
+    container.style.transform = `scale(${scale})`;
+    container.style.transformOrigin = 'center center';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('scaleSlider').value = 1;
+  document.getElementById('scaleValue').textContent = '1x';
+});
+</script>
+
+</body>
+</html>
