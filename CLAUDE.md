@@ -12,12 +12,31 @@ This is a **pre-implementation planning repository**. The source code has not be
 
 | File | Purpose |
 |---|---|
+| `fases/README.md` | **Implementation roadmap — start here.** 11 sequential phase documents from setup to production |
 | `sdd.md` | Full Spec-Driven Development document — source of truth for all technical decisions |
 | `projeto.md` | Product vision, philosophy, and feature descriptions |
 | `analise-features.md` | Analysis of 15 proposed features with implementation sketches |
 | `design-thinking.md` | Design Thinking framework template for the project |
 | `prisma/schema.prisma` | Complete Prisma schema (12 models, 2 enums) |
-| `prisma/seed.ts` | Seed data: 5 biomes, 30 native trees with scientific data, ICTA13 subject with 5 content blocks |
+| `prisma/seed.ts` | Seed data: 5 biomes, 31 native trees with scientific data, ICTA13 subject with 5 content blocks |
+
+## Implementation Phases
+
+The full development roadmap is broken into 11 sequential phase documents in `/fases/`. Start at `fases/README.md` for the index, then execute `fase-00-setup.md` first. Each phase has its own acceptance criteria, tests (Vitest), and incremental Prisma migrations — verify all criteria before moving to the next.
+
+| Phase | Topic | Days |
+|---|---|---|
+| 00 | Setup (Next.js + Vitest + co2 field) | 1-2 |
+| 01 | Auth (NextAuth + bcrypt) | 3-4 |
+| 02 | Content + scoring + streak | 5-7 |
+| 03 | Forest + tree shop + CO₂ | 5-7 |
+| 04 | Daily missions + achievements | 3-5 |
+| 05 | Community feed + Claude validation | 5-7 |
+| 06 | Notifications + fauna | 3-5 |
+| 07 | Teacher mode + classes + mentorship | 7-10 |
+| 08 | Accessibility (WCAG AA + TTS + dark mode) | 3-5 |
+| 09 | Dashboard + real plantings + certificates | 3-5 |
+| 10 | Deploy (Vercel + Railway + Sentry) | 2-3 |
 
 ## Planned Stack
 
@@ -62,4 +81,13 @@ Tree `co2_absorption_kg_year` defaults to `22.0` in the schema; the seed does no
 
 ## Features Not Yet in Schema
 
-The following features from `sdd.md` are fully specified but not yet in `prisma/schema.prisma`: `daily_missions`, `achievements`, `user_achievements`, `classes`, `class_enrollments`, `class_forest`, `mentorships`, `fauna_species`, `user_fauna`, `real_plantings`, `notifications`. When implementing, add these models to the schema and run `npm run db:migrate`.
+The following features from `sdd.md` are fully specified but not yet in `prisma/schema.prisma`. They are added **incrementally** in the phase that consumes them — do not add them all at once.
+
+| Models | Added in Phase |
+|---|---|
+| `co2_absorption_kg_year` on `Tree` | Phase 00 |
+| `daily_missions`, `achievements`, `user_achievements` | Phase 04 |
+| `notifications`, `fauna_species`, `user_fauna` | Phase 06 |
+| `UserRole` enum, `classes`, `class_enrollments`, `class_forest`, `mentorships` | Phase 07 |
+| `preferences` on `User` | Phase 08 |
+| `real_plantings` | Phase 09 |
