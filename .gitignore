@@ -19,6 +19,9 @@ build/
 # Testing
 coverage/
 
+# Supabase
+supabase/.temp/
+
 # Misc
 .DS_Store
 *.pem
