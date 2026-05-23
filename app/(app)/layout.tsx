@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Header } from '@/components/Header'
+import { StreakBadge } from '@/components/ui/StreakBadge'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
@@ -27,7 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Header />
+      <Header streakDays={(session.user as any)?.streakDays || 0} />
       <main className="min-h-screen bg-gray-50">{children}</main>
     </>
   )
