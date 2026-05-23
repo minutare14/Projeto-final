@@ -4,90 +4,95 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Reserva Florestal** — an edtech platform that turns dense academic content into gamified micro-learning. Students earn points by reading fragmented content blocks, answering checkpoints, and contributing to a community feed. Points are spent to plant real Brazilian native trees in a personal virtual forest, unlocking biomes (Caatinga → Cerrado → Mata Atlântica → Pantanal → Amazônia). AI validates community posts.
+**Reserva Florestal** — Gamified micro-learning platform where students earn points by reading content blocks, answering checkpoints, and contributing to a virtual forest. Points unlock biomes (Caatinga → Cerrado → Mata Atlântica → Pantanal → Amazônia) and fund real tree plantings via partner NGOs. AI (Claude API) validates community posts.
 
-This is a **pre-implementation planning repository**. The source code has not been scaffolded yet. All specifications are defined in the docs below.
+Stack: **Next.js 14 + Tailwind CSS + Zustand** (frontend), **Node.js + Express** (API at `/api/v1`), **PostgreSQL + Prisma**, **NextAuth.js**, **Claude API** (post validation + content import).
 
 ## Key Documents
 
 | File | Purpose |
 |---|---|
-| `fases/README.md` | **Implementation roadmap — start here.** 11 sequential phase documents from setup to production |
-| `sdd.md` | Full Spec-Driven Development document — source of truth for all technical decisions |
-| `projeto.md` | Product vision, philosophy, and feature descriptions |
-| `analise-features.md` | Analysis of 15 proposed features with implementation sketches |
-| `design-thinking.md` | Design Thinking framework template for the project |
-| `prisma/schema.prisma` | Complete Prisma schema (12 models, 2 enums) |
-| `prisma/seed.ts` | Seed data: 5 biomes, 31 native trees with scientific data, ICTA13 subject with 5 content blocks |
+| `fases/README.md` | **Start here.** 11-phase implementation roadmap from setup to deploy |
+| `sdd.md` | Full technical spec — source of truth for data models, APIs, business rules |
+| `projeto.md` | Product vision and feature descriptions |
+| `analise-features.md` | Feature analysis with implementation sketches |
+| `prisma/schema.prisma` | Database schema (12 models, 2 enums) |
+| `prisma/seed.ts` | Seed: 5 biomes, 31 native trees, 1 subject (ICTA13) with 5 blocks |
 
-## Implementation Phases
-
-The full development roadmap is broken into 11 sequential phase documents in `/fases/`. Start at `fases/README.md` for the index, then execute `fase-00-setup.md` first. Each phase has its own acceptance criteria, tests (Vitest), and incremental Prisma migrations — verify all criteria before moving to the next.
-
-| Phase | Topic | Days |
-|---|---|---|
-| 00 | Setup (Next.js + Vitest + co2 field) | 1-2 |
-| 01 | Auth (NextAuth + bcrypt) | 3-4 |
-| 02 | Content + scoring + streak | 5-7 |
-| 03 | Forest + tree shop + CO₂ | 5-7 |
-| 04 | Daily missions + achievements | 3-5 |
-| 05 | Community feed + Claude validation | 5-7 |
-| 06 | Notifications + fauna | 3-5 |
-| 07 | Teacher mode + classes + mentorship | 7-10 |
-| 08 | Accessibility (WCAG AA + TTS + dark mode) | 3-5 |
-| 09 | Dashboard + real plantings + certificates | 3-5 |
-| 10 | Deploy (Vercel + Railway + Sentry) | 2-3 |
-
-## Planned Stack
-
-- **Frontend:** Next.js 14 + Tailwind CSS + Zustand + KaTeX + react-markdown
-- **Backend:** Node.js + Express (API at `/api/v1`)
-- **Database:** PostgreSQL via Prisma ORM + PGVector for semantic search
-- **Auth:** NextAuth.js (Google OAuth + email/password)
-- **AI:** Claude API (Anthropic) — post validation + content import
-- **Jobs:** node-cron for daily mission generation
-
-## Database Commands
+## Development Commands
 
 ```bash
-npm run db:migrate      # run pending migrations (prisma migrate dev)
-npm run db:seed         # seed biomes, trees, ICTA13 content
-npm run db:reset        # reset DB and re-seed (prisma migrate reset --force)
-npm run db:studio       # open Prisma Studio UI
-npm run generate        # regenerate Prisma client after schema changes
+npm run dev          # Next.js dev server (http://localhost:3000)
+npm run build        # Production build
+npm run db:migrate   # Run Prisma migrations (prisma migrate dev)
+npm run db:seed      # Seed biomes, trees, ICTA13 content
+npm run db:reset     # Reset DB and re-seed
+npm run db:studio    # Open Prisma Studio
+npx prisma generate  # Regenerate Prisma client after schema changes
 ```
 
-Requires `DATABASE_URL` in environment pointing to a PostgreSQL instance.
+Requires `DATABASE_URL` pointing to a PostgreSQL instance. Copy `.env.example` to `.env` and fill in credentials.
 
-## Architecture Decisions Recorded in SDD
+## Architecture
 
-**Scoring system:** all point events are logged in `point_events` with a `source` field. Point deductions (tree purchases) are negative entries. The `total_points` on `users` is the authoritative balance — recomputable from `point_events` if needed.
+### Folder Structure
 
-**Idempotency:** `POST /blocks/:id/complete` and `POST /checkpoints/:id/answer` are idempotent by design. Second calls must not re-award points. Use `user_progress` as the guard.
+```
+app/                    # Next.js App Router (pages + API routes)
+components/             # React components
+lib/                    # Services, utilities, AI integrations
+  └── ai/               # Claude API agents (post validator, content importer)
+prisma/                 # Schema, migrations, seed
+public/                 # Static assets (tree illustrations, fauna sprites)
+tests/                  # Vitest unit + integration tests
+fases/                  # 11-phase development roadmap
+docs/                   # Planning documents
+```
 
-**AI post validation:** asynchronous. Submitting a post returns immediately with `status: pending`. Claude API is called in background; result updates the post and triggers a notification.
+### Key Design Patterns
 
-**Tier gate on trees:** purchasing a tree requires BOTH `total_points >= tree.cost_points` AND `user.current_tier >= tree.tier_required`. The Pau-Brasil (lendário) is in Tier 3 (Mata Atlântica) but requires `tier_required = 5` — intentional design to make it a late-game goal.
+**Scoring:** All point events logged in `point_events` with `source` field. `users.total_points` is authoritative balance — recomputable from `point_events`.
 
-**Teacher role:** `users.role` enum (`student | teacher | admin`). Teacher-only routes must be protected at the middleware level. Teachers can create subjects, blocks, and classes; the content importer calls Claude API to fragment raw text into blocks.
+**Idempotency:** `POST /blocks/:id/complete` and `POST /checkpoints/:id/answer` are idempotent. Use `user_progress` as guard to prevent double-crediting.
 
-**Real planting trigger:** fires when `COUNT(user_forest WHERE user_id = ?) % 100 = 0` after any planting. Creates a `real_plantings` record and a notification.
+**AI post validation:** Async. Submit returns `status: pending` immediately. Claude API called in background; result updates post and triggers notification.
+
+**Tier gate on trees:** Purchase requires BOTH `total_points >= cost` AND `current_tier >= tier_required`. Pau-Brasil (lendário) requires `tier_required = 5` despite being in Tier 3 biome — intentional late-game goal.
+
+**Role-based access:** `users.role` enum (`student | teacher | admin`). Teacher-only routes protected at middleware level.
+
+**Real planting trigger:** Fires when `COUNT(user_forest WHERE user_id = ?) % 100 = 0` after any planting.
+
+## Database Models
+
+Core entities: `User`, `Biome`, `Tree`, `UserForest`, `UserBiome`, `Subject`, `ContentBlock`, `Checkpoint`, `UserProgress`, `Post`, `PostLike`, `PointEvent`.
+
+Models added incrementally per phase (not all in initial schema): `DailyMission`, `Achievement`, `UserAchievement` (Phase 04), `Notification`, `FaunaSpecies`, `UserFauna` (Phase 06), `Class`, `ClassEnrollment`, `ClassForest`, `Mentorship` (Phase 07), `RealPlanting` (Phase 09).
 
 ## Seed Data Notes
 
-The seed in `prisma/seed.ts` uses `upsert` throughout — safe to re-run. Content blocks for ICTA13 use deterministic string IDs (`icta13-block-1`, etc.) to make upserts reliable. Trees are upserted by positional index in the `TREES` array, so order matters — do not reorder entries.
+Seed uses `upsert` throughout — safe to re-run. Content blocks use deterministic string IDs (`icta13-block-1`, etc.) for reliable upserts. Trees are upserted by positional index — **do not reorder** tree entries in `seed.ts`.
 
-Tree `co2_absorption_kg_year` defaults to `22.0` in the schema; the seed does not override it per species yet. When adding species-accurate values, update each tree entry in `seed.ts` directly.
+`co2_absorption_kg_year` on trees defaults to `22.0` in schema; seed does not yet set per-species values.
 
-## Features Not Yet in Schema
+## API Base URL
 
-The following features from `sdd.md` are fully specified but not yet in `prisma/schema.prisma`. They are added **incrementally** in the phase that consumes them — do not add them all at once.
+`/api/v1` — all API routes under this prefix.
 
-| Models | Added in Phase |
+## Implementation Phases
+
+Development is sequential. Start at `fases/fase-00-setup.md`. Each phase has acceptance criteria and tests — verify all pass before advancing.
+
+| Phase | Focus |
 |---|---|
-| `co2_absorption_kg_year` on `Tree` | Phase 00 |
-| `daily_missions`, `achievements`, `user_achievements` | Phase 04 |
-| `notifications`, `fauna_species`, `user_fauna` | Phase 06 |
-| `UserRole` enum, `classes`, `class_enrollments`, `class_forest`, `mentorships` | Phase 07 |
-| `preferences` on `User` | Phase 08 |
-| `real_plantings` | Phase 09 |
+| 00 | Setup: Next.js + Vitest + initial schema field |
+| 01 | Auth: NextAuth + bcrypt |
+| 02 | Content + scoring + streak |
+| 03 | Forest + tree shop + CO₂ |
+| 04 | Daily missions + achievements |
+| 05 | Community feed + Claude AI validation |
+| 06 | Notifications + fauna |
+| 07 | Teacher mode + classes + mentorship |
+| 08 | Accessibility: WCAG AA + TTS + dark mode |
+| 09 | Dashboard + real plantings + certificates |
+| 10 | Deploy: Vercel + Railway + Sentry |
