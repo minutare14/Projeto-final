@@ -8,38 +8,93 @@ import { TreeSprite } from '@/components/forest/TreeSprite'
 /* ─────────────────────────────────────────────
    TILE GROUND CONSTANTS (px)
 ───────────────────────────────────────────── */
-const EDGE_H    =  4   // top highlight stripe
-const SURFACE_H = 38   // main textured soil
-const SUBSOIL_H = 13   // dark bottom stripe
-const GROUND_H  = EDGE_H + SURFACE_H + SUBSOIL_H  // 55 px total
+const EDGE_H    =  4
+const SURFACE_H = 38
+const SUBSOIL_H = 13
+const GROUND_H  = EDGE_H + SURFACE_H + SUBSOIL_H   // 55 px
 
 /* ─────────────────────────────────────────────
    GRID PRESETS
 ───────────────────────────────────────────── */
 const GRID = {
-  small:  { cols: 4, rows: 3 },   // ≤ 12 trees
-  medium: { cols: 6, rows: 4 },   // ≤ 24 trees
-  large:  { cols: 8, rows: 5 },   // ≤ 40 trees
-  xlarge: { cols: 10, rows: 6 },  // ≤ 60 trees
+  small:  { cols: 4, rows: 3 },
+  medium: { cols: 6, rows: 4 },
+  large:  { cols: 8, rows: 5 },
+  xlarge: { cols: 10, rows: 6 },
 } as const
 type GridPreset = keyof typeof GRID
 
-function gridPresetFor(count: number): GridPreset {
-  if (count < GRID.small.cols  * GRID.small.rows)  return 'small'
-  if (count < GRID.medium.cols * GRID.medium.rows) return 'medium'
-  if (count < GRID.large.cols  * GRID.large.rows)  return 'large'
+function gridPresetFor(n: number): GridPreset {
+  if (n < GRID.small.cols  * GRID.small.rows)  return 'small'
+  if (n < GRID.medium.cols * GRID.medium.rows) return 'medium'
+  if (n < GRID.large.cols  * GRID.large.rows)  return 'large'
   return 'xlarge'
+}
+
+/* ─────────────────────────────────────────────
+   PNG SPRITE LOOKUP
+   Files in /public/sprites/:
+     mandacaru  pequeno/medio/grande
+     buriti     pequeno/medio/grande
+     ipe        pequeno/medio          (no grande)
+     araucaria  pequena/media/grande   (feminine)
+     pau brasil pequeno/medio/grande
+───────────────────────────────────────────── */
+
+// Natural dimensions (px) — used to compute rendered width from target height
+const SPRITE_DIMS: Record<string, Record<string, [number, number]>> = {
+  mandacaru:   { pequeno: [161, 237],  medio:  [212, 384],  grande: [326, 559]  },
+  buriti:      { pequeno: [189, 204],  medio:  [277, 408],  grande: [383, 536]  },
+  ipe:         { pequeno: [213, 415],  medio:  [304, 556]                       },
+  araucaria:   { pequena: [266, 534],  media:  [266, 520],  grande: [679, 1024] },
+  'pau brasil':{ pequeno: [153, 213],  medio:  [294, 486],  grande: [505, 739]  },
+}
+
+function normalizeName(name: string) {
+  return name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
+}
+
+function spriteKey(commonName: string): string | null {
+  const n = normalizeName(commonName)
+  if (n.includes('mandacaru'))               return 'mandacaru'
+  if (n.includes('buriti'))                  return 'buriti'
+  if (n.includes('ipe') || n.includes('ipê'))return 'ipe'
+  if (n.includes('araucaria'))               return 'araucaria'
+  if (n.includes('pau brasil') || n.includes('pau-brasil')) return 'pau brasil'
+  return null
+}
+
+function sizeLabel(key: string, rarity: string): string {
+  const isFem = key === 'araucaria'
+  if (rarity === 'epico' || rarity === 'lendario') return 'grande'
+  if (rarity === 'raro')   return isFem ? 'media'   : 'medio'
+  /* comum / incomum */    return isFem ? 'pequena'  : 'pequeno'
+}
+
+interface SpriteInfo {
+  src: string          // URL
+  naturalW: number
+  naturalH: number
+}
+
+function getSpriteInfo(commonName: string, rarity: string): SpriteInfo | null {
+  const key   = spriteKey(commonName)
+  if (!key) return null
+  const label = sizeLabel(key, rarity)
+  const dims  = SPRITE_DIMS[key]?.[label]
+  if (!dims) return null
+  return { src: `/sprites/${key} ${label}.png`, naturalW: dims[0], naturalH: dims[1] }
 }
 
 /* ─────────────────────────────────────────────
    TREE SIZE + PLANT DEPTH PER RARITY
 ───────────────────────────────────────────── */
-const RARITY_CFG: Record<string, { size: number; depth: number }> = {
-  comum:    { size:  58, depth:  6 },
-  incomum:  { size:  72, depth:  9 },
-  raro:     { size:  88, depth: 10 },
-  epico:    { size: 106, depth: 12 },
-  lendario: { size: 132, depth: 16 },
+const RARITY_CFG: Record<string, { height: number; depth: number }> = {
+  comum:    { height:  80, depth:  6 },
+  incomum:  { height: 100, depth:  9 },
+  raro:     { height: 120, depth: 10 },
+  epico:    { height: 145, depth: 12 },
+  lendario: { height: 175, depth: 16 },
 }
 
 /* ─────────────────────────────────────────────
@@ -53,7 +108,7 @@ interface TerrainCfg {
   surfaceColor: string
   subsoilColor: string
   edgeColor:    string
-  emptyColor:   string   // tint for empty-slot indicator
+  emptyColor:   string
   detail:       'pebbles' | 'sparse-grass' | 'dense-grass' | 'puddles' | 'roots'
 }
 
@@ -110,7 +165,7 @@ const TIER_BIOME: Record<number, BiomeKey> = {
 }
 
 function toBiomeKey(name: string): BiomeKey {
-  const n = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const n = normalizeName(name)
   if (n.includes('caatinga'))  return 'caatinga'
   if (n.includes('cerrado'))   return 'cerrado'
   if (n.includes('mata'))      return 'mata-atlantica'
@@ -120,7 +175,7 @@ function toBiomeKey(name: string): BiomeKey {
 }
 
 /* ─────────────────────────────────────────────
-   GROUND TEXTURE OVERLAY (fills the surface div)
+   GROUND TEXTURE
 ───────────────────────────────────────────── */
 function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
   if (detail === 'pebbles') {
@@ -189,7 +244,6 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
       </svg>
     )
   }
-  // roots
   return (
     <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none"
       style={{ position: 'absolute', inset: 0 }}>
@@ -202,98 +256,90 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
 }
 
 /* ─────────────────────────────────────────────
-   COVER STRIP — biome vegetation over tree base
+   COVER STRIP
 ───────────────────────────────────────────── */
 function CoverStrip({ detail, surfaceColor }: { detail: TerrainCfg['detail']; surfaceColor: string }) {
-  const blades = Array.from({ length: 7 }, (_, i) => ({
-    x: i * 14 + 5,
-    lean: ((i % 3) - 1) * 5,
-  }))
+  const blades = Array.from({ length: 7 }, (_, i) => ({ x: i * 14 + 5, lean: ((i % 3) - 1) * 5 }))
   const bg = <rect width="100" height="100" fill={surfaceColor} />
-
-  if (detail === 'dense-grass') {
-    return (
-      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
-        style={{ position: 'absolute', inset: 0 }}>
-        {bg}
-        {blades.map((b, i) => (
-          <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},50 ${b.x + b.lean},10`}
-            stroke="#2C7025" strokeWidth="2.5" fill="none" opacity="0.7" />
-        ))}
-      </svg>
-    )
-  }
-  if (detail === 'sparse-grass') {
-    return (
-      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
-        style={{ position: 'absolute', inset: 0 }}>
-        {bg}
-        {blades.map((b, i) => (
-          <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},55 ${b.x + b.lean},15`}
-            stroke="#7A6028" strokeWidth="2" fill="none" opacity="0.6" />
-        ))}
-      </svg>
-    )
-  }
-  if (detail === 'roots') {
-    return (
-      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
-        style={{ position: 'absolute', inset: 0 }}>
-        {bg}
-        <path d="M10,100 Q32,55 58,78 Q72,36 92,62"
-          stroke="#183C0C" strokeWidth="3" fill="none" opacity="0.45" />
-      </svg>
-    )
-  }
-  if (detail === 'puddles') {
-    return (
-      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
-        style={{ position: 'absolute', inset: 0 }}>
-        {bg}
-        <ellipse cx="50" cy="55" rx="22" ry="7" fill="rgba(80,148,210,0.22)" />
-      </svg>
-    )
-  }
+  if (detail === 'dense-grass') return (
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+      {bg}{blades.map((b, i) => <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},50 ${b.x + b.lean},10`} stroke="#2C7025" strokeWidth="2.5" fill="none" opacity="0.7" />)}
+    </svg>
+  )
+  if (detail === 'sparse-grass') return (
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+      {bg}{blades.map((b, i) => <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},55 ${b.x + b.lean},15`} stroke="#7A6028" strokeWidth="2" fill="none" opacity="0.6" />)}
+    </svg>
+  )
+  if (detail === 'roots') return (
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0 }}>
+      {bg}<path d="M10,100 Q32,55 58,78 Q72,36 92,62" stroke="#183C0C" strokeWidth="3" fill="none" opacity="0.45" />
+    </svg>
+  )
   return <div style={{ position: 'absolute', inset: 0, background: surfaceColor }} />
 }
 
 /* ─────────────────────────────────────────────
-   GROUND TILE — bottom of each grid cell
+   GROUND TILE
 ───────────────────────────────────────────── */
-function GroundTile({ terrain, isEmpty }: { terrain: TerrainCfg; isEmpty: boolean }) {
+function GroundTile({ terrain }: { terrain: TerrainCfg }) {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {/* Top edge highlight */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: EDGE_H,
-        background: terrain.edgeColor,
-      }} />
-      {/* Surface */}
-      <div style={{
-        position: 'absolute', top: EDGE_H, left: 0, right: 0,
-        bottom: SUBSOIL_H,
-        background: terrain.surfaceColor,
-        overflow: 'hidden',
-      }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: EDGE_H, background: terrain.edgeColor }} />
+      <div style={{ position: 'absolute', top: EDGE_H, left: 0, right: 0, bottom: SUBSOIL_H, background: terrain.surfaceColor, overflow: 'hidden' }}>
         <GroundTexture detail={terrain.detail} />
       </div>
-      {/* Subsoil */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: SUBSOIL_H,
-        background: terrain.subsoilColor,
-      }} />
-      {/* Right cell border */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        borderRight: '1px solid rgba(0,0,0,0.12)',
-        pointerEvents: 'none',
-      }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: SUBSOIL_H, background: terrain.subsoilColor }} />
+      <div style={{ position: 'absolute', inset: 0, borderRight: '1px solid rgba(0,0,0,0.12)', pointerEvents: 'none' }} />
     </div>
   )
 }
 
 /* ─────────────────────────────────────────────
-   FOREST CELL — one tile in the grid
+   TREE RENDERER — PNG sprite or SVG fallback
+───────────────────────────────────────────── */
+function TreeImage({
+  commonName, biomeKey, rarity, targetHeight,
+}: {
+  commonName: string
+  biomeKey: BiomeKey
+  rarity: string
+  targetHeight: number
+}) {
+  const info = getSpriteInfo(commonName, rarity)
+
+  if (info) {
+    const renderedW = Math.round(targetHeight * info.naturalW / info.naturalH)
+    return (
+      <img
+        src={info.src}
+        alt={commonName}
+        draggable={false}
+        style={{
+          height: targetHeight,
+          width: renderedW,
+          display: 'block',
+          imageRendering: 'auto',
+          userSelect: 'none',
+        }}
+      />
+    )
+  }
+
+  // SVG fallback — TreeSprite uses width as `size`
+  return (
+    <TreeSprite
+      species={commonName}
+      biome={biomeKey}
+      rarity={rarity as any}
+      size={Math.round(targetHeight * 0.65)}
+      animated={rarity === 'epico' || rarity === 'lendario'}
+    />
+  )
+}
+
+/* ─────────────────────────────────────────────
+   FOREST CELL
 ───────────────────────────────────────────── */
 interface PlantedTree {
   commonName: string
@@ -303,40 +349,39 @@ interface PlantedTree {
 }
 
 function ForestCell({
-  tree,
-  biomeName,
-  biomeKey,
-  terrain,
-  rowDepth,
+  tree, biomeKey, terrain, rowDepth,
 }: {
   tree?: PlantedTree
-  biomeName: string
   biomeKey: BiomeKey
   terrain: TerrainCfg
-  rowDepth: number   // higher = front row = higher z-index
+  rowDepth: number
 }) {
-  const rarity = tree?.rarity ?? 'comum'
-  const cfg    = RARITY_CFG[rarity] ?? RARITY_CFG.comum
-  const z      = rowDepth * 10   // front rows on top
+  const rarity  = tree?.rarity ?? 'comum'
+  const cfg     = RARITY_CFG[rarity] ?? RARITY_CFG.comum
+  const z       = rowDepth * 10
+
+  // Compute rendered width of PNG sprite for shadow sizing
+  const info       = tree ? getSpriteInfo(tree.commonName, rarity) : null
+  const shadowW    = info
+    ? Math.round(cfg.height * info.naturalW / info.naturalH * 0.65)
+    : Math.round(cfg.height * 0.5)
+  const coverW     = info
+    ? Math.round(cfg.height * info.naturalW / info.naturalH)
+    : Math.round(cfg.height * 0.65)
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      overflow: 'visible',   // trees may extend above cell top
-    }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
 
-      {/* ── Shadow ellipse ── */}
+      {/* Shadow ellipse */}
       {tree && (
         <div style={{
           position: 'absolute',
           bottom: GROUND_H + 1,
           left: '50%',
           transform: 'translate(-50%, 50%)',
-          width: Math.round(cfg.size * 0.68),
+          width: shadowW,
           height: 7,
-          background: 'rgba(0,0,0,0.20)',
+          background: 'rgba(0,0,0,0.22)',
           borderRadius: '50%',
           filter: 'blur(3px)',
           zIndex: z + 2,
@@ -344,7 +389,7 @@ function ForestCell({
         }} />
       )}
 
-      {/* ── Tree sprite ── */}
+      {/* Tree sprite (PNG or SVG) */}
       {tree && (
         <div
           style={{
@@ -355,27 +400,25 @@ function ForestCell({
             zIndex: z + 3,
             cursor: 'pointer',
           }}
-          title={[tree.commonName, tree.scientificName, tree.funFact]
-            .filter(Boolean).join('\n')}
+          title={[tree.commonName, tree.scientificName, tree.funFact].filter(Boolean).join('\n')}
         >
-          <TreeSprite
-            species={tree.commonName}
-            biome={biomeKey}
-            rarity={rarity as any}
-            size={cfg.size}
-            animated={rarity === 'epico' || rarity === 'lendario'}
+          <TreeImage
+            commonName={tree.commonName}
+            biomeKey={biomeKey}
+            rarity={rarity}
+            targetHeight={cfg.height}
           />
         </div>
       )}
 
-      {/* ── Cover strip — buries tree base in ground ── */}
+      {/* Cover strip — buries the sprite base in the ground */}
       {tree && (
         <div style={{
           position: 'absolute',
           bottom: GROUND_H - cfg.depth,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: cfg.size,
+          width: coverW,
           height: cfg.depth,
           zIndex: z + 4,
           overflow: 'hidden',
@@ -385,34 +428,24 @@ function ForestCell({
         </div>
       )}
 
-      {/* ── Ground tile ── */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: GROUND_H,
-        zIndex: z + 1,
-      }}>
-        <GroundTile terrain={terrain} isEmpty={!tree} />
+      {/* Ground tile */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: GROUND_H, zIndex: z + 1 }}>
+        <GroundTile terrain={terrain} />
       </div>
 
-      {/* ── Empty slot indicator ── */}
+      {/* Empty slot indicator */}
       {!tree && (
         <div style={{
           position: 'absolute',
-          bottom: GROUND_H + 12,
+          bottom: GROUND_H + 10,
           left: '50%',
           transform: 'translateX(-50%)',
           color: `${terrain.emptyColor}55`,
           fontSize: 22,
-          lineHeight: 1,
           userSelect: 'none',
           pointerEvents: 'none',
           zIndex: z + 1,
-        }}>
-          +
-        </div>
+        }}>+</div>
       )}
     </div>
   )
@@ -436,7 +469,6 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
   const biomeKey = TIER_BIOME[currentTier] ?? 'caatinga'
   const terrain  = TERRAIN[biomeKey]
 
-  // Sort by plantedAt (oldest first) to fill grid top-left → bottom-right
   const sortedForest = useMemo(
     () => [...forest].sort((a, b) =>
       new Date(a.plantedAt ?? 0).getTime() - new Date(b.plantedAt ?? 0).getTime()
@@ -444,17 +476,13 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
     [forest],
   )
 
-  const preset       = gridPresetFor(sortedForest.length)
+  const preset         = gridPresetFor(sortedForest.length)
   const { cols, rows } = GRID[preset]
-  const totalCells   = cols * rows
+  const totalCells     = cols * rows
 
-  // Build cell array: planted trees fill slots in order, rest are empty
   const cells = Array.from({ length: totalCells }, (_, i) =>
     sortedForest[i]?.tree ?? null
   )
-
-  const planted  = sortedForest.length
-  const capacity = totalCells
 
   return (
     <div style={{
@@ -465,19 +493,17 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
       background: terrain.skyGradient,
     }}>
 
-      {/* ── HUD top-left ── */}
+      {/* HUD */}
       <div className="absolute top-4 left-4 z-[500] bg-black/35 backdrop-blur-sm rounded-xl px-4 py-3 select-none">
         <p className="font-bold text-white text-base leading-tight">{terrain.displayName}</p>
         <p className="text-xs text-white/75 mt-0.5">{totalPoints} pontos</p>
-        <p className="text-xs text-white/60 mt-0.5">{planted}/{capacity} árvores</p>
+        <p className="text-xs text-white/60 mt-0.5">{sortedForest.length}/{totalCells} árvores</p>
       </div>
-
-      {/* ── HUD top-right ── */}
       <div className="absolute top-4 right-4 z-[500]">
         <CO2Counter value={co2Kg} />
       </div>
 
-      {/* ── Grid ── */}
+      {/* Grid */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -486,23 +512,20 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
         gridTemplateRows: `repeat(${rows}, 1fr)`,
       }}>
         {cells.map((tree, idx) => {
-          const row     = Math.floor(idx / cols)
-          const rowDepth = row + 1   // row 0 = back, row (rows-1) = front
-
+          const row = Math.floor(idx / cols)
           return (
             <ForestCell
               key={idx}
               tree={tree ?? undefined}
-              biomeName={terrain.displayName}
               biomeKey={biomeKey}
               terrain={terrain}
-              rowDepth={rowDepth}
+              rowDepth={row + 1}
             />
           )
         })}
       </div>
 
-      {/* ── Shop button ── */}
+      {/* Shop */}
       <button
         onClick={() => setShowShop(true)}
         className="absolute bottom-6 right-6 z-[500] bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg transition-colors font-medium"
