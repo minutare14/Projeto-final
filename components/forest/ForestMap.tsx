@@ -5,72 +5,102 @@ import { CO2Counter } from '@/components/ui/CO2Counter'
 import { TreeShop } from '@/components/shop/TreeShop'
 import { TreeSprite } from '@/components/forest/TreeSprite'
 
-/* ── Ground layer heights (px) ── */
-const SUBSOIL_H = 20  // dark bottom layer
-const SURFACE_H = 30  // main textured layer
-const EDGE_H    =  4  // bright top highlight
-const GROUND_H  = SUBSOIL_H + SURFACE_H + EDGE_H  // 54 px total
+/* ─────────────────────────────────────────────
+   TILE GROUND CONSTANTS (px)
+───────────────────────────────────────────── */
+const EDGE_H    =  4   // top highlight stripe
+const SURFACE_H = 38   // main textured soil
+const SUBSOIL_H = 13   // dark bottom stripe
+const GROUND_H  = EDGE_H + SURFACE_H + SUBSOIL_H  // 55 px total
 
-/* ── Tree size + plant depth per rarity ── */
-const RARITY_CFG: Record<string, { size: number; depth: number }> = {
-  comum:    { size:  64, depth:  6 },
-  incomum:  { size:  80, depth: 10 },
-  raro:     { size:  96, depth: 10 },
-  epico:    { size: 112, depth: 10 },
-  lendario: { size: 140, depth: 16 },
+/* ─────────────────────────────────────────────
+   GRID PRESETS
+───────────────────────────────────────────── */
+const GRID = {
+  small:  { cols: 4, rows: 3 },   // ≤ 12 trees
+  medium: { cols: 6, rows: 4 },   // ≤ 24 trees
+  large:  { cols: 8, rows: 5 },   // ≤ 40 trees
+  xlarge: { cols: 10, rows: 6 },  // ≤ 60 trees
+} as const
+type GridPreset = keyof typeof GRID
+
+function gridPresetFor(count: number): GridPreset {
+  if (count < GRID.small.cols  * GRID.small.rows)  return 'small'
+  if (count < GRID.medium.cols * GRID.medium.rows) return 'medium'
+  if (count < GRID.large.cols  * GRID.large.rows)  return 'large'
+  return 'xlarge'
 }
 
-/* ── Biome terrain palette ── */
+/* ─────────────────────────────────────────────
+   TREE SIZE + PLANT DEPTH PER RARITY
+───────────────────────────────────────────── */
+const RARITY_CFG: Record<string, { size: number; depth: number }> = {
+  comum:    { size:  58, depth:  6 },
+  incomum:  { size:  72, depth:  9 },
+  raro:     { size:  88, depth: 10 },
+  epico:    { size: 106, depth: 12 },
+  lendario: { size: 132, depth: 16 },
+}
+
+/* ─────────────────────────────────────────────
+   BIOME TERRAIN CONFIG
+───────────────────────────────────────────── */
 type BiomeKey = 'caatinga' | 'cerrado' | 'mata-atlantica' | 'pantanal' | 'amazonia'
 
 interface TerrainCfg {
+  displayName:  string
   skyGradient:  string
   surfaceColor: string
   subsoilColor: string
   edgeColor:    string
+  emptyColor:   string   // tint for empty-slot indicator
   detail:       'pebbles' | 'sparse-grass' | 'dense-grass' | 'puddles' | 'roots'
-  displayName:  string
 }
 
 const TERRAIN: Record<BiomeKey, TerrainCfg> = {
   caatinga: {
     displayName:  'Caatinga',
-    skyGradient:  'linear-gradient(to bottom,#C4721A 0%,#E89E48 45%,#FFD070 100%)',
+    skyGradient:  'linear-gradient(to bottom,#B8621A 0%,#E08A3A 40%,#F5C060 100%)',
     surfaceColor: '#C8A96E',
     subsoilColor: '#8B6914',
     edgeColor:    '#DFBA7A',
+    emptyColor:   '#F5C060',
     detail:       'pebbles',
   },
   cerrado: {
     displayName:  'Cerrado',
-    skyGradient:  'linear-gradient(to bottom,#3A7CB0 0%,#6AAEDE 55%,#B8DCF4 100%)',
+    skyGradient:  'linear-gradient(to bottom,#2E6CA0 0%,#5AA0D0 50%,#A8D0EE 100%)',
     surfaceColor: '#8B7355',
     subsoilColor: '#6B4E10',
     edgeColor:    '#9D8462',
+    emptyColor:   '#A8D0EE',
     detail:       'sparse-grass',
   },
   'mata-atlantica': {
     displayName:  'Mata Atlântica',
-    skyGradient:  'linear-gradient(to bottom,#0C3460 0%,#1860A0 55%,#3E90C4 100%)',
+    skyGradient:  'linear-gradient(to bottom,#0A3258 0%,#145898 50%,#3882BE 100%)',
     surfaceColor: '#4A7C3F',
     subsoilColor: '#2E5A1C',
-    edgeColor:    '#5A9C50',
+    edgeColor:    '#5C9C50',
+    emptyColor:   '#5CB870',
     detail:       'dense-grass',
   },
   pantanal: {
     displayName:  'Pantanal',
-    skyGradient:  'linear-gradient(to bottom,#246688 0%,#4E9EC4 55%,#94CCEA 100%)',
+    skyGradient:  'linear-gradient(to bottom,#1E5878 0%,#409AC6 50%,#88C8E8 100%)',
     surfaceColor: '#5B8A4A',
     subsoilColor: '#3A6B2A',
     edgeColor:    '#6C9A5C',
+    emptyColor:   '#88C8E8',
     detail:       'puddles',
   },
   amazonia: {
     displayName:  'Amazônia',
-    skyGradient:  'linear-gradient(to bottom,#041828 0%,#083050 60%,#0E5075 100%)',
+    skyGradient:  'linear-gradient(to bottom,#021020 0%,#062840 60%,#0C4468 100%)',
     surfaceColor: '#2D5A1C',
     subsoilColor: '#1A3D0E',
     edgeColor:    '#3E7828',
+    emptyColor:   '#3AAA50',
     detail:       'roots',
   },
 }
@@ -81,36 +111,38 @@ const TIER_BIOME: Record<number, BiomeKey> = {
 
 function toBiomeKey(name: string): BiomeKey {
   const n = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  if (n.includes('caatinga'))             return 'caatinga'
-  if (n.includes('cerrado'))              return 'cerrado'
-  if (n.includes('mata') || n.includes('atlantica')) return 'mata-atlantica'
-  if (n.includes('pantanal'))             return 'pantanal'
-  if (n.includes('amaz'))                 return 'amazonia'
+  if (n.includes('caatinga'))  return 'caatinga'
+  if (n.includes('cerrado'))   return 'cerrado'
+  if (n.includes('mata'))      return 'mata-atlantica'
+  if (n.includes('pantanal'))  return 'pantanal'
+  if (n.includes('amaz'))      return 'amazonia'
   return 'cerrado'
 }
 
-/* ── Ground surface texture (SVG overlay, fills the surface div) ── */
+/* ─────────────────────────────────────────────
+   GROUND TEXTURE OVERLAY (fills the surface div)
+───────────────────────────────────────────── */
 function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
   if (detail === 'pebbles') {
-    const stones = Array.from({ length: 20 }, (_, i) => ({
-      cx: ((i * 137 + 23) % 95) + 2,
-      cy: 20 + (i % 4) * 22,
+    const stones = Array.from({ length: 14 }, (_, i) => ({
+      cx: ((i * 137 + 23) % 92) + 4,
+      cy: 20 + (i % 4) * 20,
       rx: 1.2 + (i % 3) * 0.6,
-      ry: 0.8 + (i % 2) * 0.4,
+      ry: 0.7 + (i % 2) * 0.4,
     }))
     return (
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0 }}>
         {stones.map((s, i) => (
           <ellipse key={i} cx={`${s.cx}%`} cy={`${s.cy}%`}
-            rx={s.rx} ry={s.ry} fill="rgba(70,44,4,0.35)" />
+            rx={s.rx} ry={s.ry} fill="rgba(70,44,4,0.32)" />
         ))}
       </svg>
     )
   }
   if (detail === 'sparse-grass') {
-    const blades = Array.from({ length: 18 }, (_, i) => ({
-      x: ((i * 153 + 7) % 93) + 3,
+    const blades = Array.from({ length: 16 }, (_, i) => ({
+      x: ((i * 153 + 7) % 90) + 5,
       lean: ((i % 3) - 1) * 3,
       h: 10 + (i % 4) * 4,
     }))
@@ -126,8 +158,8 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
     )
   }
   if (detail === 'dense-grass') {
-    const blades = Array.from({ length: 24 }, (_, i) => ({
-      x: ((i * 113 + 5) % 95) + 2,
+    const blades = Array.from({ length: 22 }, (_, i) => ({
+      x: ((i * 113 + 5) % 92) + 4,
       lean: ((i % 5) - 2) * 2.5,
       h: 12 + (i % 4) * 5,
     }))
@@ -143,8 +175,8 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
     )
   }
   if (detail === 'puddles') {
-    const puddles = Array.from({ length: 7 }, (_, i) => ({
-      cx: ((i * 197 + 13) % 82) + 9,
+    const puddles = Array.from({ length: 5 }, (_, i) => ({
+      cx: ((i * 197 + 13) % 80) + 10,
       cy: 30 + (i % 3) * 25,
     }))
     return (
@@ -157,7 +189,7 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
       </svg>
     )
   }
-  // roots (Amazônia)
+  // roots
   return (
     <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none"
       style={{ position: 'absolute', inset: 0 }}>
@@ -169,26 +201,23 @@ function GroundTexture({ detail }: { detail: TerrainCfg['detail'] }) {
   )
 }
 
-/* ── Cover strip rendered over each tree's buried base ── */
+/* ─────────────────────────────────────────────
+   COVER STRIP — biome vegetation over tree base
+───────────────────────────────────────────── */
 function CoverStrip({ detail, surfaceColor }: { detail: TerrainCfg['detail']; surfaceColor: string }) {
-  const blades = Array.from({ length: 8 }, (_, i) => ({
-    x: i * 13 + 4,
+  const blades = Array.from({ length: 7 }, (_, i) => ({
+    x: i * 14 + 5,
     lean: ((i % 3) - 1) * 5,
-    h: 65 + (i % 3) * 20,
   }))
-
-  const base = (
-    <rect width="100" height="100" fill={surfaceColor} />
-  )
+  const bg = <rect width="100" height="100" fill={surfaceColor} />
 
   if (detail === 'dense-grass') {
     return (
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0 }}>
-        {base}
+        {bg}
         {blades.map((b, i) => (
-          <path key={i}
-            d={`M${b.x},100 Q${b.x + b.lean / 2},${100 - b.h / 2} ${b.x + b.lean},${100 - b.h}`}
+          <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},50 ${b.x + b.lean},10`}
             stroke="#2C7025" strokeWidth="2.5" fill="none" opacity="0.7" />
         ))}
       </svg>
@@ -198,10 +227,9 @@ function CoverStrip({ detail, surfaceColor }: { detail: TerrainCfg['detail']; su
     return (
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0 }}>
-        {base}
+        {bg}
         {blades.map((b, i) => (
-          <path key={i}
-            d={`M${b.x},100 Q${b.x + b.lean / 2},${100 - b.h / 2} ${b.x + b.lean},${100 - b.h}`}
+          <path key={i} d={`M${b.x},100 Q${b.x + b.lean / 2},55 ${b.x + b.lean},15`}
             stroke="#7A6028" strokeWidth="2" fill="none" opacity="0.6" />
         ))}
       </svg>
@@ -211,7 +239,7 @@ function CoverStrip({ detail, surfaceColor }: { detail: TerrainCfg['detail']; su
     return (
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0 }}>
-        {base}
+        {bg}
         <path d="M10,100 Q32,55 58,78 Q72,36 92,62"
           stroke="#183C0C" strokeWidth="3" fill="none" opacity="0.45" />
       </svg>
@@ -221,16 +249,178 @@ function CoverStrip({ detail, surfaceColor }: { detail: TerrainCfg['detail']; su
     return (
       <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none"
         style={{ position: 'absolute', inset: 0 }}>
-        {base}
+        {bg}
         <ellipse cx="50" cy="55" rx="22" ry="7" fill="rgba(80,148,210,0.22)" />
       </svg>
     )
   }
-  // pebbles / default
   return <div style={{ position: 'absolute', inset: 0, background: surfaceColor }} />
 }
 
-/* ── Props ── */
+/* ─────────────────────────────────────────────
+   GROUND TILE — bottom of each grid cell
+───────────────────────────────────────────── */
+function GroundTile({ terrain, isEmpty }: { terrain: TerrainCfg; isEmpty: boolean }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {/* Top edge highlight */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: EDGE_H,
+        background: terrain.edgeColor,
+      }} />
+      {/* Surface */}
+      <div style={{
+        position: 'absolute', top: EDGE_H, left: 0, right: 0,
+        bottom: SUBSOIL_H,
+        background: terrain.surfaceColor,
+        overflow: 'hidden',
+      }}>
+        <GroundTexture detail={terrain.detail} />
+      </div>
+      {/* Subsoil */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: SUBSOIL_H,
+        background: terrain.subsoilColor,
+      }} />
+      {/* Right cell border */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        borderRight: '1px solid rgba(0,0,0,0.12)',
+        pointerEvents: 'none',
+      }} />
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   FOREST CELL — one tile in the grid
+───────────────────────────────────────────── */
+interface PlantedTree {
+  commonName: string
+  scientificName: string
+  rarity: string
+  funFact?: string
+}
+
+function ForestCell({
+  tree,
+  biomeName,
+  biomeKey,
+  terrain,
+  rowDepth,
+}: {
+  tree?: PlantedTree
+  biomeName: string
+  biomeKey: BiomeKey
+  terrain: TerrainCfg
+  rowDepth: number   // higher = front row = higher z-index
+}) {
+  const rarity = tree?.rarity ?? 'comum'
+  const cfg    = RARITY_CFG[rarity] ?? RARITY_CFG.comum
+  const z      = rowDepth * 10   // front rows on top
+
+  return (
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      overflow: 'visible',   // trees may extend above cell top
+    }}>
+
+      {/* ── Shadow ellipse ── */}
+      {tree && (
+        <div style={{
+          position: 'absolute',
+          bottom: GROUND_H + 1,
+          left: '50%',
+          transform: 'translate(-50%, 50%)',
+          width: Math.round(cfg.size * 0.68),
+          height: 7,
+          background: 'rgba(0,0,0,0.20)',
+          borderRadius: '50%',
+          filter: 'blur(3px)',
+          zIndex: z + 2,
+          pointerEvents: 'none',
+        }} />
+      )}
+
+      {/* ── Tree sprite ── */}
+      {tree && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: GROUND_H - cfg.depth,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: z + 3,
+            cursor: 'pointer',
+          }}
+          title={[tree.commonName, tree.scientificName, tree.funFact]
+            .filter(Boolean).join('\n')}
+        >
+          <TreeSprite
+            species={tree.commonName}
+            biome={biomeKey}
+            rarity={rarity as any}
+            size={cfg.size}
+            animated={rarity === 'epico' || rarity === 'lendario'}
+          />
+        </div>
+      )}
+
+      {/* ── Cover strip — buries tree base in ground ── */}
+      {tree && (
+        <div style={{
+          position: 'absolute',
+          bottom: GROUND_H - cfg.depth,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: cfg.size,
+          height: cfg.depth,
+          zIndex: z + 4,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        }}>
+          <CoverStrip detail={terrain.detail} surfaceColor={terrain.surfaceColor} />
+        </div>
+      )}
+
+      {/* ── Ground tile ── */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: GROUND_H,
+        zIndex: z + 1,
+      }}>
+        <GroundTile terrain={terrain} isEmpty={!tree} />
+      </div>
+
+      {/* ── Empty slot indicator ── */}
+      {!tree && (
+        <div style={{
+          position: 'absolute',
+          bottom: GROUND_H + 12,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          color: `${terrain.emptyColor}55`,
+          fontSize: 22,
+          lineHeight: 1,
+          userSelect: 'none',
+          pointerEvents: 'none',
+          zIndex: z + 1,
+        }}>
+          +
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   FOREST MAP — main export
+───────────────────────────────────────────── */
 interface ForestMapProps {
   userId: string
   forest: any[]
@@ -246,22 +436,25 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
   const biomeKey = TIER_BIOME[currentTier] ?? 'caatinga'
   const terrain  = TERRAIN[biomeKey]
 
-  // Stable sort by posX for basic left→right depth ordering
+  // Sort by plantedAt (oldest first) to fill grid top-left → bottom-right
   const sortedForest = useMemo(
-    () => [...forest].sort((a, b) => a.posX - b.posX),
+    () => [...forest].sort((a, b) =>
+      new Date(a.plantedAt ?? 0).getTime() - new Date(b.plantedAt ?? 0).getTime()
+    ),
     [forest],
   )
 
-  /*
-   * Z-index stacking:
-   *  1  — subsoil (behind all)
-   *  2  — surface ground (behind trees)
-   *  3  — edge highlight (behind trees)
-   *  4  — shadow ellipses (in front of ground, behind trees)
-   *  5… — tree sprites (one z-level per tree for depth sorting)
-   * 60  — cover strips (in FRONT of tree bases → planted-in-ground effect)
-   * 200 — HUD
-   */
+  const preset       = gridPresetFor(sortedForest.length)
+  const { cols, rows } = GRID[preset]
+  const totalCells   = cols * rows
+
+  // Build cell array: planted trees fill slots in order, rest are empty
+  const cells = Array.from({ length: totalCells }, (_, i) =>
+    sortedForest[i]?.tree ?? null
+  )
+
+  const planted  = sortedForest.length
+  const capacity = totalCells
 
   return (
     <div style={{
@@ -272,156 +465,49 @@ export function ForestMap({ forest, co2Kg, currentTier, totalPoints }: ForestMap
       background: terrain.skyGradient,
     }}>
 
-      {/* ── HUD ── */}
-      <div className="absolute top-4 right-4 z-[200]">
+      {/* ── HUD top-left ── */}
+      <div className="absolute top-4 left-4 z-[500] bg-black/35 backdrop-blur-sm rounded-xl px-4 py-3 select-none">
+        <p className="font-bold text-white text-base leading-tight">{terrain.displayName}</p>
+        <p className="text-xs text-white/75 mt-0.5">{totalPoints} pontos</p>
+        <p className="text-xs text-white/60 mt-0.5">{planted}/{capacity} árvores</p>
+      </div>
+
+      {/* ── HUD top-right ── */}
+      <div className="absolute top-4 right-4 z-[500]">
         <CO2Counter value={co2Kg} />
       </div>
-      <div className="absolute top-4 left-4 z-[200] bg-black/30 backdrop-blur-sm rounded-xl px-4 py-3">
-        <p className="font-bold text-white text-lg">{terrain.displayName}</p>
-        <p className="text-sm text-white/80">{totalPoints} pontos</p>
-      </div>
 
-      {/* ── LAYER 1 — Subsoil ── */}
+      {/* ── Grid ── */}
       <div style={{
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: SUBSOIL_H,
-        background: terrain.subsoilColor,
-        zIndex: 1,
-      }} />
-
-      {/* ── LAYER 2 — Surface (behind tree sprites; cover strips occlude bases) ── */}
-      <div style={{
-        position: 'absolute',
-        bottom: SUBSOIL_H,
-        left: 0,
-        right: 0,
-        height: SURFACE_H,
-        background: terrain.surfaceColor,
-        zIndex: 2,
-        overflow: 'hidden',
+        inset: 0,
+        display: 'grid',
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gridTemplateRows: `repeat(${rows}, 1fr)`,
       }}>
-        <GroundTexture detail={terrain.detail} />
-      </div>
+        {cells.map((tree, idx) => {
+          const row     = Math.floor(idx / cols)
+          const rowDepth = row + 1   // row 0 = back, row (rows-1) = front
 
-      {/* ── LAYER 3 — Edge highlight ── */}
-      <div style={{
-        position: 'absolute',
-        bottom: SUBSOIL_H + SURFACE_H,
-        left: 0,
-        right: 0,
-        height: EDGE_H,
-        background: terrain.edgeColor,
-        zIndex: 3,
-      }} />
-
-      {/* ── LAYER 4 — Shadow ellipses (above ground, below tree sprites) ── */}
-      {sortedForest.map((entry) => {
-        const rarity = entry.tree?.rarity ?? 'comum'
-        const cfg    = RARITY_CFG[rarity] ?? RARITY_CFG.comum
-        // Center shadow on the edge/top of the surface
-        const shadowBottom = SUBSOIL_H + SURFACE_H - 2
-        return (
-          <div
-            key={entry.id + '-shadow'}
-            style={{
-              position: 'absolute',
-              left: `${entry.posX}%`,
-              bottom: shadowBottom,
-              transform: 'translate(-50%, 50%)',
-              width: `${Math.round(cfg.size * 0.7)}px`,
-              height: '8px',
-              background: 'rgba(0,0,0,0.22)',
-              borderRadius: '50%',
-              filter: 'blur(3px)',
-              zIndex: 4,
-            }}
-          />
-        )
-      })}
-
-      {/* ── LAYERS 5+ — Tree sprites anchored to ground ── */}
-      {sortedForest.map((entry, idx) => {
-        const rarity   = entry.tree?.rarity ?? 'comum'
-        const cfg      = RARITY_CFG[rarity] ?? RARITY_CFG.comum
-        const treeBiome = toBiomeKey(entry.biome?.name ?? '')
-
-        /*
-         * Anchor formula:
-         *   GROUND_TOP = GROUND_H (from container bottom)
-         *   tree base enters ground by cfg.depth pixels
-         *   → bottom of sprite div = GROUND_TOP - cfg.depth
-         */
-        const treeBottom = GROUND_H - cfg.depth
-
-        return (
-          <div
-            key={entry.id}
-            style={{
-              position: 'absolute',
-              left: `${entry.posX}%`,
-              bottom: `${treeBottom}px`,
-              transform: 'translateX(-50%)',
-              zIndex: 5 + idx,
-              cursor: 'pointer',
-            }}
-            title={[
-              entry.tree?.commonName,
-              entry.tree?.scientificName,
-              entry.tree?.funFact,
-            ].filter(Boolean).join('\n')}
-          >
-            <TreeSprite
-              species={entry.tree?.commonName ?? ''}
-              biome={treeBiome}
-              rarity={rarity}
-              size={cfg.size}
-              animated={rarity === 'lendario' || rarity === 'epico'}
+          return (
+            <ForestCell
+              key={idx}
+              tree={tree ?? undefined}
+              biomeName={terrain.displayName}
+              biomeKey={biomeKey}
+              terrain={terrain}
+              rowDepth={rowDepth}
             />
-          </div>
-        )
-      })}
-
-      {/* ── LAYER 6 — Cover strips (front of tree bases, creates planted effect) ── */}
-      {sortedForest.map((entry) => {
-        const rarity = entry.tree?.rarity ?? 'comum'
-        const cfg    = RARITY_CFG[rarity] ?? RARITY_CFG.comum
-
-        /*
-         * Strip covers exactly the cfg.depth pixels that the sprite
-         * descends into the ground surface.
-         *   bottom = GROUND_H - cfg.depth  (= same as tree bottom)
-         *   height = cfg.depth
-         * → top edge of strip aligns with ground top (GROUND_H)
-         */
-        return (
-          <div
-            key={entry.id + '-cover'}
-            style={{
-              position: 'absolute',
-              left: `${entry.posX}%`,
-              bottom: `${GROUND_H - cfg.depth}px`,
-              transform: 'translateX(-50%)',
-              width: `${cfg.size}px`,
-              height: `${cfg.depth}px`,
-              zIndex: 60,
-              overflow: 'hidden',
-              pointerEvents: 'none',
-            }}
-          >
-            <CoverStrip detail={terrain.detail} surfaceColor={terrain.surfaceColor} />
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
       {/* ── Shop button ── */}
       <button
         onClick={() => setShowShop(true)}
-        className="absolute bottom-8 right-8 z-[200] bg-green-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-700 transition-colors"
+        className="absolute bottom-6 right-6 z-[500] bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-full shadow-lg transition-colors font-medium"
       >
-        🛒 Loja de Árvores
+        🛒 Plantar Árvore
       </button>
 
       {showShop && (
