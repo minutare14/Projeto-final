@@ -13,8 +13,20 @@ export function TreeShop({ onClose, currentTier, totalPoints }: TreeShopProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/trees').then(r => r.json()).then(d => { setTrees(d); setLoading(false) })
+    fetch('/api/trees').then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setTrees(d)
+      else setTrees(MOCK_TREES)
+      setLoading(false)
+    }).catch(() => { setTrees(MOCK_TREES); setLoading(false) })
   }, [])
+
+  const MOCK_TREES = [
+    { id:1, commonName:'Mandacaru',  scientificName:'Cereus jamacaru',         rarity:'comum',    costPoints:100, description:'Resistente à seca' },
+    { id:2, commonName:'Buriti',      scientificName:'Mauritia flexuosa',        rarity:'raro',     costPoints:300, description:'Palmeira do breu' },
+    { id:3, commonName:'Ipê',         scientificName:'Handroanthus impetiginosus',rarity:'incomum',  costPoints:150, description:'Floração amarela' },
+    { id:4, commonName:'Araucária',   scientificName:'Araucaria angustifolia',   rarity:'epico',    costPoints:500, description:'Símbolo do sul' },
+    { id:5, commonName:'Pau-Brasil',  scientificName:'Paubrasilia echinata',     rarity:'lendario', costPoints:1000, description:'Árvore nacional' },
+  ]
 
   const handlePlant = async (treeId: number) => {
     const posX = Math.random() * 80 + 10

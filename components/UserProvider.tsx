@@ -1,20 +1,18 @@
 'use client'
 
-import { SessionProvider } from 'next-auth/react'
+import { SessionProvider, useSession } from 'next-auth/react'
 import { useEffect } from 'react'
 import { useUserStore } from '@/lib/store/useUserStore'
 
 function HydrateUser() {
+  const { data } = useSession()
   const { setUser } = useUserStore()
 
   useEffect(() => {
-    import('next-auth/react').then(({ useSession }) => {
-      const { data } = useSession()
-      if (data?.user) {
-        setUser(data.user as any)
-      }
-    })
-  }, [setUser])
+    if (data?.user) {
+      setUser(data.user as any)
+    }
+  }, [data, setUser])
 
   return null
 }
