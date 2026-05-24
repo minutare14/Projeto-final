@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserva Florestal — Floresta Virtual</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: linear-gradient(180deg, #0a1628 0%, #1a2744 50%, #0d1a2d 100%); color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; padding: 2rem; }
+    .controls { display: flex; gap: 2rem; align-items: center; margin-bottom: 3rem; padding: 1.5rem 2rem; background: rgba(22,33,62,0.9); border-radius: 16px; position: sticky; top: 0; z-index: 100; border: 2px solid rgba(233,69,96,0.3); backdrop-filter: blur(10px); flex-wrap: wrap; }
+    .controls label { font-size: 1.1rem; color: #a0a0a0; }
+    .toggle-btn { background: rgba(15,52,96,0.8); color: #e0e0e0; border: 2px solid #e94560; padding: 0.75rem 1.5rem; border-radius: 10px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+    .toggle-btn:hover, .toggle-btn.active { background: #e94560; color: #fff; }
+    .biome-btn { background: rgba(20,40,80,0.8); color: #e0e0e0; border: 2px solid #888; padding: 0.75rem 1.25rem; border-radius: 10px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+    .biome-btn:hover { border-color: #e94560; }
+    .biome-btn.selected { background: #e94560; color: #fff; border-color: #e94560; }
+    .scale-slider { width: 150px; accent-color: #e94560; }
+    .scale-value { min-width: 3rem; text-align: center; font-weight: 700; color: #e94560; font-size: 1.1rem; }
+    .biome-section { margin-bottom: 4rem; }
+    .biome-title { font-size: 2rem; font-weight: 800; color: #e94560; margin-bottom: 2rem; padding-bottom: 0.75rem; border-bottom: 3px solid rgba(233,69,96,0.3); letter-spacing: 0.1em; display: flex; align-items: center; gap: 0.75rem; }
+    .biome-icon { font-size: 2.5rem; }
+    .trees-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+    .tree-card { background: linear-gradient(135deg, rgba(22,33,62,0.95) 0%, rgba(15,40,75,0.9) 100%); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; border: 2px solid rgba(233,69,96,0.2); transition: transform 0.3s, box-shadow 0.3s; }
+    .tree-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(233,69,96,0.2); }
+    .tree-sizes { display: flex; align-items: flex-end; justify-content: center; gap: 1rem; height: 220px; padding: 1.5rem; background: rgba(0,0,0,0.3); border-radius: 16px; width: 100%; }
+    .tree-sizes img { object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); transition: transform 0.3s; }
+    .tree-sizes img:hover { transform: scale(1.15); }
+    .tree-info { text-align: center; width: 100%; }
+    .tree-name { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+    .tree-biome { font-size: 0.85rem; font-weight: 600; color: #fff; padding: 0.3rem 0.8rem; border-radius: 6px; display: inline-block; margin-top: 0.5rem; }
+    .bg-caatinga { background: linear-gradient(135deg, #c4956a, #a07550); }
+    .bg-cerrado { background: linear-gradient(135deg, #d4a574, #b48554); }
+    .bg-mata { background: linear-gradient(135deg, #2a8a4a, #1a6a3a); }
+    .bg-sul { background: linear-gradient(135deg, #4a6a8a, #3a5a7a); }
+
+    /* Floresta */
+    .forest-container { margin-top: 4rem; }
+    .forest-title { font-size: 2rem; font-weight: 800; color: #e94560; margin-bottom: 1.5rem; }
+    .forest-canvas { position: relative; width: 100%; height: 650px; border-radius: 24px; overflow: hidden; border: 3px solid rgba(233,69,96,0.3); }
+    .forest-canvas canvas { display: block; width: 100%; height: 100%; }
+
+    .stats { margin-top: 3rem; padding: 1.5rem 2.5rem; background: rgba(22,33,62,0.9); border-radius: 16px; border: 2px solid rgba(233,69,96,0.3); display: flex; gap: 4rem; flex-wrap: wrap; justify-content: center; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 3rem; font-weight: 800; color: #e94560; }
+    .stat-label { font-size: 0.9rem; color: #8a9ab0; text-transform: uppercase; letter-spacing: 0.1em; }
+    h1 { font-size: 3rem; color: #e94560; margin-bottom: 3rem; text-align: center; text-shadow: 0 0 30px rgba(233,69,96,0.3); }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="toggle-btn active" id="animToggle" onclick="toggleAnimation()">Animação</button>
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <label>Tamanho:</label>
+    <input type="range" class="scale-slider" id="scaleSlider" min="0.5" max="2" step="0.1" value="1" oninput="updateScale()">
+    <span class="scale-value" id="scaleValue">1x</span>
+  </div>
+  <button class="toggle-btn" id="forestToggle" onclick="toggleForest()">Ver Floresta</button>
+</div>
+
+<!-- Trees Catalog -->
+<div id="treesCatalog">
+  <h1>🌲 Reserva Florestal — Sprites</h1>
+
+  <div class="biome-section">
+    <h2 class="biome-title"><span class="biome-icon">🌵</span> CAATINGA</h2>
+    <div class="trees-grid">
+      <div class="tree-card">
+        <div class="tree-sizes">
+          <img src="/sprites/mandacaru pequeno.png" alt="Pequeno" style="height: 80px;">
+          <img src="/sprites/mandacaru medio.png" alt="Médio" style="height: 130px;">
+          <img src="/sprites/mandacaru grande.png" alt="Grande" style="height: 180px;">
+        </div>
+        <div class="tree-info">
+          <div class="tree-name">Mandacaru</div>
+          <span class="tree-biome bg-caatinga">Caatinga</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="biome-section">
+    <h2 class="biome-title"><span class="biome-icon">🌾</span> CERRADO</h2>
+    <div class="trees-grid">
+      <div class="tree-card">
+        <div class="tree-sizes">
+          <img src="/sprites/buriti pequeno.png" alt="Pequeno" style="height: 80px;">
+          <img src="/sprites/buriti medio.png" alt="Médio" style="height: 130px;">
+          <img src="/sprites/buriti grande.png" alt="Grande" style="height: 180px;">
+        </div>
+        <div class="tree-info">
+          <div class="tree-name">Buriti</div>
+          <span class="tree-biome bg-cerrado">Cerrado</span>
+        </div>
+      </div>
+      <div class="tree-card">
+        <div class="tree-sizes">
+          <img src="/sprites/ipe pequeno.png" alt="Pequeno" style="height: 80px;">
+          <img src="/sprites/ipe medio.png" alt="Médio" style="height: 130px;">
+        </div>
+        <div class="tree-info">
+          <div class="tree-name">Ipê</div>
+          <span class="tree-biome bg-cerrado">Cerrado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="biome-section">
+    <h2 class="biome-title"><span class="biome-icon">🌲</span> REGIÃO SUL</h2>
+    <div class="trees-grid">
+      <div class="tree-card">
+        <div class="tree-sizes">
+          <img src="/sprites/araucaria pequena.png" alt="Pequena" style="height: 80px;">
+          <img src="/sprites/araucaria media.png" alt="Média" style="height: 130px;">
+          <img src="/sprites/araucaria grande.png" alt="Grande" style="height: 180px;">
+        </div>
+        <div class="tree-info">
+          <div class="tree-name">Araucária</div>
+          <span class="tree-biome bg-sul">Região Sul</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="biome-section">
+    <h2 class="biome-title"><span class="biome-icon">🌳</span> MATA ATLÂNTICA</h2>
+    <div class="trees-grid">
+      <div class="tree-card">
+        <div class="tree-sizes">
+          <img src="/sprites/pau brasil pequeno.png" alt="Pequeno" style="height: 80px;">
+          <img src="/sprites/pau brasil medio.png" alt="Médio" style="height: 130px;">
+          <img src="/sprites/pau brasil grande.png" alt="Grande" style="height: 180px;">
+        </div>
+        <div class="tree-info">
+          <div class="tree-name">Pau-Brasil</div>
+          <span class="tree-biome bg-mata">Mata Atlântica</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floresta Virtual -->
+<div id="forestView" class="forest-container" style="display: none;">
+  <h2 class="forest-title">🌲 Floresta Virtual</h2>
+  <div class="forest-canvas" id="forestCanvas">
+    <canvas id="forestLayer"></canvas>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat"><div class="stat-value">5</div><div class="stat-label">species</div></div>
+  <div class="stat"><div class="stat-value">14</div><div class="stat-label">sprites</div></div>
+  <div class="stat"><div class="stat-value">3</div><div class="stat-label">sizes each</div></div>
+</div>
+
+<script>
+// Biome ground configurations
+// groundHeight = total height from canvas bottom to top of ground surface
+// Ground layers (top to bottom from groundY):
+//   - 2px: highlight (bright line)
+//   - 12px: surface (main color)
+//   - 8px:  subsoil (dark underlayer)
+const BIOMES = {
+  caatinga: {
+    sky: ['#1a2a3a', '#2a3a4a'],
+    subsoil: '#8B6914',
+    surface: '#C8A96E',
+    highlight: '#D4BC8A',
+    details: 'pebbles',
+    groundHeight: 140
+  },
+  cerrado: {
+    sky: ['#2a3a2a', '#3a4a3a'],
+    subsoil: '#6B4E10',
+    surface: '#8B7355',
+    highlight: '#A08565',
+    details: 'grass',
+    groundHeight: 130
+  },
+  mata: {
+    sky: ['#1a3a2a', '#2a4a3a'],
+    subsoil: '#2E5A1C',
+    surface: '#4A7C3F',
+    highlight: '#5A8C4F',
+    details: 'moss',
+    groundHeight: 120
+  },
+  pantanal: {
+    sky: ['#1a4a2a', '#2a5a3a'],
+    subsoil: '#3A6B2A',
+    surface: '#5B8A4A',
+    highlight: '#6B9A5A',
+    details: 'water',
+    groundHeight: 135
+  },
+  amazonia: {
+    sky: ['#0a2a0a', '#1a3a1a'],
+    subsoil: '#1A3D0E',
+    surface: '#2D5A1C',
+    highlight: '#3D6A2C',
+    details: 'roots',
+    groundHeight: 115
+  },
+  sul: {
+    sky: ['#1a2a3a', '#2a3a4a'],
+    subsoil: '#4A3020',
+    surface: '#5A4030',
+    highlight: '#6A5040',
+    details: 'pine',
+    groundHeight: 125
+  }
+};
+
+// Tree sprite configuration
+const SPRITES = {
+  mandacaru: [
+    { src: '/sprites/mandacaru pequeno.png', height: 60 },
+    { src: '/sprites/mandacaru medio.png', height: 100 },
+    { src: '/sprites/mandacaru grande.png', height: 160 }
+  ],
+  buriti: [
+    { src: '/sprites/buriti pequeno.png', height: 65 },
+    { src: '/sprites/buriti medio.png', height: 110 },
+    { src: '/sprites/buriti grande.png', height: 170 }
+  ],
+  ipe: [
+    { src: '/sprites/ipe pequeno.png', height: 55 },
+    { src: '/sprites/ipe medio.png', height: 95 }
+  ],
+  araucaria: [
+    { src: '/sprites/araucaria pequena.png', height: 70 },
+    { src: '/sprites/araucaria media.png', height: 120 },
+    { src: '/sprites/araucaria grande.png', height: 180 }
+  ],
+  pau_brasil: [
+    { src: '/sprites/pau brasil pequeno.png', height: 65 },
+    { src: '/sprites/pau brasil medio.png', height: 115 },
+    { src: '/sprites/pau brasil grande.png', height: 175 }
+  ]
+};
+
+// Plant depth per tree size (small, medium, large)
+const PLANT_DEPTHS = [6, 10, 16];
+
+// Forest tree positions (x as percentage 0-100)
+const FOREST_TREES = [
+  { type: 'mandacaru', size: 2, x: 8 },
+  { type: 'buriti', size: 2, x: 20 },
+  { type: 'araucaria', size: 1, x: 14 },
+  { type: 'ipe', size: 1, x: 35 },
+  { type: 'pau_brasil', size: 2, x: 50 },
+  { type: 'mandacaru', size: 1, x: 28 },
+  { type: 'buriti', size: 1, x: 42 },
+  { type: 'araucaria', size: 2, x: 65 },
+  { type: 'pau_brasil', size: 1, x: 75 },
+  { type: 'mandacaru', size: 0, x: 18 },
+  { type: 'buriti', size: 0, x: 40 },
+  { type: 'ipe', size: 0, x: 58 },
+  { type: 'araucaria', size: 0, x: 80 },
+  { type: 'pau_brasil', size: 0, x: 32 },
+  { type: 'mandacaru', size: 1, x: 55 },
+  { type: 'buriti', size: 2, x: 5 },
+  { type: 'araucaria', size: 1, x: 85 },
+  { type: 'pau_brasil', size: 1, x: 70 },
+  { type: 'mandacaru', size: 0, x: 45 },
+  { type: 'buriti', size: 1, x: 25 },
+  { type: 'ipe', size: 1, x: 12 },
+  { type: 'araucaria', size: 2, x: 60 },
+  { type: 'pau_brasil', size: 0, x: 78 },
+  { type: 'mandacaru', size: 1, x: 38 },
+  { type: 'buriti', size: 0, x: 52 },
+  { type: 'pau_brasil', size: 2, x: 48 },
+  { type: 'ipe', size: 0, x: 90 },
+  { type: 'araucaria', size: 1, x: 22 },
+  { type: 'pau_brasil', size: 0, x: 68 }
+];
+
+const LAYER_SUBSOIL = 8;
+const LAYER_SURFACE = 12;
+const LAYER_HIGHLIGHT = 2;
+
+let currentBiome = 'mata';
+let animationEnabled = true;
+let loadedImages = {};
+
+function preloadSprites(callback) {
+  let loaded = 0;
+  let total = 0;
+
+  for (let type in SPRITES) {
+    for (let s in SPRITES[type]) {
+      total++;
+      let img = new Image();
+      img.onload = () => {
+        loaded++;
+        if (loaded >= total) callback();
+      };
+      img.onerror = () => {
+        loaded++;
+        if (loaded >= total) callback();
+      };
+      img.src = SPRITES[type][s].src;
+      loadedImages[type + s] = img;
+    }
+  }
+  if (total === 0) callback();
+}
+
+function drawGround(ctx, biome, canvasWidth, canvasHeight, groundY) {
+  const b = BIOMES[biome];
+
+  // 1. Subsolo (8px) — imediatamente abaixo da superfície
+  // Desenha de groundY até groundY + LAYER_SUBSOIL
+  ctx.fillStyle = b.subsoil;
+  ctx.fillRect(0, groundY, canvasWidth, LAYER_SUBSOIL);
+
+  // 2. Superfície (12px) — cor principal do bioma
+  // Desenha de groundY + LAYER_SUBSOIL até groundY + LAYER_SUBSOIL + LAYER_SURFACE
+  ctx.fillStyle = b.surface;
+  ctx.fillRect(0, groundY + LAYER_SUBSOIL, canvasWidth, LAYER_SURFACE);
+
+  // 3. Textura do terreno — capim/seixos/etc na camada de superfície
+  ctx.save();
+  if (b.details === 'pebbles') {
+    // Pedrinhas pontilhadas na superfície
+    for (let i = 0; i < 35; i++) {
+      const px = Math.random() * canvasWidth;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = b.highlight + '80';
+      ctx.beginPath();
+      ctx.arc(px, py, Math.random() * 2.5 + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'grass') {
+    // Capim esparso na superfície
+    ctx.strokeStyle = b.highlight + 'AA';
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x < canvasWidth; x += 5) {
+      const h = Math.random() * 7 + 3;
+      const bend = (Math.random() - 0.5) * 4;
+      ctx.beginPath();
+      ctx.moveTo(x, groundY + LAYER_SUBSOIL + LAYER_SURFACE);
+      ctx.quadraticCurveTo(x + bend, groundY + LAYER_SUBSOIL + LAYER_SURFACE - h / 2, x + bend * 0.5, groundY + LAYER_SUBSOIL + LAYER_SURFACE - h);
+      ctx.stroke();
+    }
+  } else if (b.details === 'moss') {
+    // Musgo na superfície
+    for (let i = 0; i < 25; i++) {
+      const mx = Math.random() * canvasWidth;
+      const my = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#3A6A2A' + Math.floor(Math.random() * 40 + 40).toString(16);
+      ctx.beginPath();
+      ctx.ellipse(mx, my, Math.random() * 6 + 2, Math.random() * 2 + 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'water') {
+    // Pequenas poças d'água na superfície
+    for (let i = 0; i < 8; i++) {
+      const px = Math.random() * canvasWidth;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#6A9ACA' + Math.floor(Math.random() * 30 + 50).toString(16);
+      ctx.beginPath();
+      ctx.ellipse(px, py, Math.random() * 12 + 4, Math.random() * 3 + 1, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'roots') {
+    // Raízes e folhagem densa
+    ctx.strokeStyle = '#4A3A2A' + Math.floor(Math.random() * 40 + 40).toString(16);
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++) {
+      const rx = Math.random() * canvasWidth;
+      const ry = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.quadraticCurveTo(rx + 15, ry + 10, rx - 8, ry + 20);
+      ctx.stroke();
+    }
+  } else if (b.details === 'pine') {
+    // Agulhas/pinhas na superfície
+    for (let i = 0; i < 20; i++) {
+      const px = Math.random() * canvasWidth;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#8B5A3A' + Math.floor(Math.random() * 40 + 40).toString(16);
+      ctx.beginPath();
+      ctx.arc(px, py, Math.random() * 2 + 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // 4. Borda superior brilhante (2px) — linha clara no topo do chão
+  ctx.fillStyle = b.highlight;
+  ctx.fillRect(0, groundY - LAYER_HIGHLIGHT, canvasWidth, LAYER_HIGHLIGHT);
+}
+
+function drawTreeShadow(ctx, x, treeWidth, groundY) {
+  // Sombra oval no chão — desenhada ANTES da árvore
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(
+    x,
+    groundY + 4,
+    treeWidth * 0.35,
+    4,
+    0, 0, Math.PI * 2
+  );
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawGroundCover(ctx, x, groundY, treeWidth, biome) {
+  // Capim/vegetação cobrindo a base do sprite — drawn AFTER tree
+  const b = BIOMES[biome];
+  ctx.fillStyle = b.surface;
+
+  for (let i = 0; i < 10; i++) {
+    const gx = x - treeWidth * 0.45 + Math.random() * treeWidth * 0.9;
+    const gh = Math.random() * 6 + 4;
+    const bend = (Math.random() - 0.5) * 3;
+
+    ctx.beginPath();
+    ctx.moveTo(gx, groundY);
+    ctx.quadraticCurveTo(gx + bend, groundY - gh * 0.4, gx + bend * 0.5, groundY - gh);
+    ctx.lineTo(gx + 3, groundY);
+    ctx.fill();
+  }
+}
+
+function drawForest() {
+  const canvas = document.getElementById('forestLayer');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('forestCanvas');
+
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+
+  const b = BIOMES[currentBiome];
+  const groundY = canvas.height - b.groundHeight;
+
+  // === 1. Céu em gradiente ===
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+  skyGrad.addColorStop(0, b.sky[0]);
+  skyGrad.addColorStop(1, b.sky[1]);
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, canvas.width, groundY);
+
+  // === 2. Nuvens ===
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  const time = Date.now() / 3000;
+  for (let i = 0; i < 3; i++) {
+    const cx = ((i * 40 + time * 5) % (canvas.width + 200)) - 100;
+    const cy = 50 + i * 30;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 80 + i * 20, 25 + i * 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // === 3. Estrelas ===
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  for (let i = 0; i < 20; i++) {
+    const sx = (i * 37 + 10) % canvas.width;
+    const sy = (i * 23 + 5) % (groundY * 0.6);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // === 4. Camada de subsolo ===
+  ctx.fillStyle = b.subsoil;
+  ctx.fillRect(0, groundY, canvas.width, LAYER_SUBSOIL);
+
+  // === 5. Camada de superfície ===
+  ctx.fillStyle = b.surface;
+  ctx.fillRect(0, groundY + LAYER_SUBSOIL, canvas.width, LAYER_SURFACE);
+
+  // === 6. Detalhes do bioma ===
+  ctx.save();
+  if (b.details === 'pebbles') {
+    for (let i = 0; i < 35; i++) {
+      const px = Math.random() * canvas.width;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = b.highlight + '80';
+      ctx.beginPath();
+      ctx.arc(px, py, Math.random() * 2.5 + 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'grass') {
+    ctx.strokeStyle = b.highlight + 'AA';
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x < canvas.width; x += 5) {
+      const h = Math.random() * 7 + 3;
+      const bend = (Math.random() - 0.5) * 4;
+      ctx.beginPath();
+      ctx.moveTo(x, groundY + LAYER_SUBSOIL + LAYER_SURFACE);
+      ctx.quadraticCurveTo(x + bend, groundY + LAYER_SUBSOIL + LAYER_SURFACE - h / 2, x + bend * 0.5, groundY + LAYER_SUBSOIL + LAYER_SURFACE - h);
+      ctx.stroke();
+    }
+  } else if (b.details === 'moss') {
+    for (let i = 0; i < 25; i++) {
+      const mx = Math.random() * canvas.width;
+      const my = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#3A6A2A' + Math.floor(Math.random() * 40 + 40).toString(16);
+      ctx.beginPath();
+      ctx.ellipse(mx, my, Math.random() * 6 + 2, Math.random() * 2 + 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'water') {
+    for (let i = 0; i < 8; i++) {
+      const px = Math.random() * canvas.width;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#6A9ACA' + Math.floor(Math.random() * 30 + 50).toString(16);
+      ctx.beginPath();
+      ctx.ellipse(px, py, Math.random() * 12 + 4, Math.random() * 3 + 1, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (b.details === 'roots') {
+    ctx.strokeStyle = '#4A3A2A' + Math.floor(Math.random() * 40 + 40).toString(16);
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++) {
+      const rx = Math.random() * canvas.width;
+      const ry = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.quadraticCurveTo(rx + 15, ry + 10, rx - 8, ry + 20);
+      ctx.stroke();
+    }
+  } else if (b.details === 'pine') {
+    for (let i = 0; i < 20; i++) {
+      const px = Math.random() * canvas.width;
+      const py = groundY + LAYER_SUBSOIL + Math.random() * (LAYER_SURFACE - 4);
+      ctx.fillStyle = '#8B5A3A' + Math.floor(Math.random() * 40 + 40).toString(16);
+      ctx.beginPath();
+      ctx.arc(px, py, Math.random() * 2 + 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // === 7. Borda superior do chão (highlight line) ===
+  ctx.fillStyle = b.highlight;
+  ctx.fillRect(0, groundY - LAYER_HIGHLIGHT, canvas.width, LAYER_HIGHLIGHT);
+
+  // === 8. Sombras das árvores (elipses no chão) ===
+  FOREST_TREES.forEach(tree => {
+    const sprite = SPRITES[tree.type][tree.size];
+    const img = loadedImages[tree.type + tree.size];
+    if (!img || !img.complete) return;
+
+    const treeHeight = sprite.height;
+    const treeWidth = img.naturalWidth * (treeHeight / img.naturalHeight);
+    const x = (tree.x / 100) * canvas.width;
+
+    drawTreeShadow(ctx, x, treeWidth, groundY);
+  });
+
+  // === 9. Sprites das árvores (ancorando base no chão) ===
+  FOREST_TREES.forEach(tree => {
+    const sprite = SPRITES[tree.type][tree.size];
+    const img = loadedImages[tree.type + tree.size];
+    if (!img || !img.complete) return;
+
+    const treeHeight = sprite.height;
+    const treeWidth = img.naturalWidth * (treeHeight / img.naturalHeight);
+    const plantDepth = PLANT_DEPTHS[tree.size];
+
+    const x = (tree.x / 100) * canvas.width;
+    // Sprite posicionado para que a base (树下端 + plantDepth) coincida com groundY
+    // → sprite.y = groundY - treeHeight + plantDepth
+    const spriteY = groundY - treeHeight + plantDepth;
+
+    ctx.drawImage(img, x - treeWidth / 2, spriteY, treeWidth, treeHeight);
+  });
+
+  // === 10. Capim/vegetação rasteira sobre a base dos sprites ===
+  FOREST_TREES.forEach(tree => {
+    const sprite = SPRITES[tree.type][tree.size];
+    const img = loadedImages[tree.type + tree.size];
+    if (!img || !img.complete) return;
+
+    const treeHeight = sprite.height;
+    const treeWidth = img.naturalWidth * (treeHeight / img.naturalHeight);
+    const x = (tree.x / 100) * canvas.width;
+
+    drawGroundCover(ctx, x, groundY, treeWidth, currentBiome);
+  });
+}
+
+function toggleForest() {
+  const btn = document.getElementById('forestToggle');
+  const catalog = document.getElementById('treesCatalog');
+  const forest = document.getElementById('forestView');
+
+  if (forest.style.display === 'none') {
+    forest.style.display = 'block';
+    catalog.style.display = 'none';
+    btn.classList.add('active');
+    setTimeout(drawForest, 100);
+  } else {
+    forest.style.display = 'none';
+    catalog.style.display = 'block';
+    btn.classList.remove('active');
+  }
+}
+
+function toggleAnimation() {
+  animationEnabled = !animationEnabled;
+  document.getElementById('animToggle').classList.toggle('active');
+  if (animationEnabled) animateForest();
+}
+
+function updateScale() {
+  const slider = document.getElementById('scaleSlider');
+  document.getElementById('scaleValue').textContent = slider.value + 'x';
+  document.querySelectorAll('.tree-sizes img').forEach(img => {
+    img.style.transform = `scale(${slider.value})`;
+  });
+}
+
+function selectBiome(biome) {
+  currentBiome = biome;
+  document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('biome-' + biome)?.classList.add('selected');
+  if (document.getElementById('forestView').style.display !== 'none') {
+    drawForest();
+  }
+}
+
+function animateForest() {
+  if (animationEnabled && document.getElementById('forestView').style.display !== 'none') {
+    drawForest();
+  }
+  requestAnimationFrame(animateForest);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const controlsDiv = document.querySelector('.controls');
+  const biomeButtons = Object.keys(BIOMES).map(key => {
+    const btn = document.createElement('button');
+    btn.id = 'biome-' + key;
+    btn.className = 'biome-btn' + (key === currentBiome ? ' selected' : '');
+    btn.textContent = key.toUpperCase();
+    btn.onclick = () => selectBiome(key);
+    return btn;
+  });
+  biomeButtons.forEach(btn => controlsDiv.appendChild(btn));
+
+  preloadSprites(() => {
+    drawForest();
+    animateForest();
+  });
+});
+</script>
+
+</body>
+</html>
